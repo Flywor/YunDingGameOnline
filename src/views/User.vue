@@ -317,7 +317,7 @@ export default {
     // 每隔1分钟检测有没有战斗信息更新
     setInterval(() => {
       const now = Date.now()
-      if (now - messageTime > 300000) {
+      if (now - messageTime > 30000) {
         window.location.reload();
       }
     }, 60000)
