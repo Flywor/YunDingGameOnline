@@ -105,7 +105,8 @@ export default {
       * @param {*} row
       */
     deleteUser: function (email) {
-      const index = this.userList.find(ul => ul.email === email)
+      const user = this.userList.find(ul => ul.email === email)
+      const index = this.userList.indexOf(user)
       // 从列表删除此用户
       this.userList.splice(index, 1);
 
