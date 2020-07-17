@@ -3,4 +3,4 @@
 
 基于 [云顶修仙摸鱼页游](http://yundingxx.com:8888/) 的后端服务
 
-在线预览 [云顶修仙摸鱼页游](http://yundingxx.com:8888/)
+[游玩](https://flywor.github.io/YunDingGameOnline/dist/index.html)
