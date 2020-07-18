@@ -237,7 +237,7 @@ GameApi.regHookHandlers = {
     "connector.teamHandler.leaveTeam": [],    //  离开队伍
     "connector.teamHandler.roundOperating": [],    //  回合操作
     "connector.teamHandler.showMyTeam": [],    //  显示我的团队
-    "connector.teamHandler.startCombat": [console.log],
+    "connector.teamHandler.startCombat": [],
     "connector.teamHandler.switchCombatScreen": [], // 切换战斗场景
     "connector.userHandler.addUserPetSkill": [],    //  添加用户宠物技能
     "connector.userHandler.allSellGoods": [],    //  整理

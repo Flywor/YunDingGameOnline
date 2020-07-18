@@ -231,6 +231,7 @@
 </template>
 
 <script>
+let messageTime
 import GameApi from '@libs/YunDingOnlineSDK.js'
 import regHooks from '@libs/regHooks.js'
 import configData from '@/config.js'
@@ -312,6 +313,14 @@ export default {
 
     const { email, password } = this.$route.params;
     this.initUser(email, password);
+
+    // 每隔1分钟检测有没有战斗信息更新
+    setInterval(() => {
+      const now = Date.now()
+      if (now - messageTime > 30000) {
+        window.location.reload();
+      }
+    }, 60000)
   },
   methods: {
     /**
@@ -363,6 +372,7 @@ export default {
     },
     // 设置消息
     setMessage: function (email, data) {
+      messageTime = Date.now()
       data.time = this.getDateTime()
 
       const msg = data.round_arr.find(dr => dr.a_name === email)

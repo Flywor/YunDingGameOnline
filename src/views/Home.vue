@@ -23,13 +23,13 @@
       </FormItem>
     </Form>
     <div class="card-container">
-      <Card :title="user.email" class="card" v-for="user in userList" :key="user.email">
+      <Card :title="user.email" class="card" v-for="(user, index) in userList" :key="user.email">
         <div slot="extra">
-          <a @click="logoutUser(user.email)">登出</a>
+          <a @click="handleReload(index)">重新加载</a>
           &nbsp;
           <a @click="deleteUser(user.email)">删除</a>
         </div>
-        <iframe :src="`${baseUrl}#/user/${user.email}/${user.password}`" />
+        <iframe ref="userFrame" :src="`${baseUrl}#/user/${user.email}/${user.password}`" />
       </Card>
     </div>
   </div>
@@ -96,6 +96,9 @@ export default {
       this.saveStorageUser(email, passwd);
       // 添加进去
       this.userList.push({ email, password: passwd })
+    },
+    handleReload (index) {
+      this.$refs['userFrame'][index].contentWindow.location.reload()
     },
     /**
       * 删除用户
