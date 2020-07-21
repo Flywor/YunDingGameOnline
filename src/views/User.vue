@@ -3,7 +3,64 @@
     v-if="user"
     class="user"
   >
-    <p>状态：{{user.status}}&nbsp;{{ user.status_msg && `${user.status_msg}` }}</p>
+    <p>状态：{{user.status}}&nbsp;{{ user.status_msg && `${user.status_msg}` }}
+
+      <Poptip
+        word-wrap
+        transfer
+        placement="bottom"
+      >
+        <Button
+          size="small"
+          type="info"
+        >
+          查看收益
+        </Button>
+        <div
+          class="fight-gains"
+          slot="content"
+        >
+          <div v-if="!fightGains.beginTime">
+            {{gains.tips}}
+          </div>
+          <ul v-else>
+            <li>
+              <span>开始时间:</span><span>{{gains.beginTime}}</span>
+            </li>
+            <li>
+              <span>战斗时长:</span><span>{{gains.fightTime}}</span>
+            </li>
+            <li>
+              <span>获得经验:</span><span>{{gains.gainExp}}</span>
+            </li>
+            <li class="goods">
+              <div>获得物品:</div>
+              <ul>
+                <li
+                  v-for="(value,key) in gains.goods"
+                  :key="key"
+                ><span>{{key}}:</span><span>{{value}}</span>
+                </li>
+              </ul>
+            </li>
+            <li>
+              <span>战斗回合数:</span><span>{{gains.roundCount}}</span>
+            </li>
+            <li>
+              <span>战斗场数:</span><span>{{gains.fightCount}}</span>
+            </li>
+            <li>
+              <span>经验/分钟:</span><span>{{gains.avgExp}}</span>
+            </li>
+            <li>
+              <span>战斗场数/分钟:</span><span>{{gains.avgFightCount}}</span>
+            </li>
+          </ul>
+        </div>
+      </Poptip>
+    </p>
+
+    <!-- 战斗统计 ↑ -->
     <template v-if="user.myInfo">
       <div class="br" />
       <p>
@@ -78,9 +135,9 @@
         <Button
           size="small"
           type="info"
-          @click="openBag = !openBag;"
+          @click="openBag"
         >
-          {{openBag?"关闭":"物品栏"}}
+          {{opened?"关闭":"物品栏"}}
         </Button>
 
       </p>
@@ -350,7 +407,7 @@
     </div>
     <!-- 战斗信息 ↑ -->
     <div
-      v-if="openBag"
+      v-if="opened"
       class="goods"
     >
       <span
@@ -385,7 +442,14 @@ export default {
       user: null,
       config: configData,
       hightcbtTaskId: "5f01ee501a863c76d650525c",
-      openBag: false
+      opened: false,
+      fightGains: {
+        goods: {}, //战利品
+        gainExp: 0, //获得经验
+        beginTime: 0, //开始时间
+        roundCount: 0, //回合数
+        fightCount: 0 //战斗场数
+      }
     };
   },
   watch: {
@@ -455,13 +519,44 @@ export default {
         ust => ust.task._id === this.hightcbtTaskId
       );
     },
+    //背包
     goods() {
       return this.user.goods;
+    },
+    gains() {
+      //战斗时长 s
+      const endTime = Date.now();
+      const time = (endTime - this.fightGains.beginTime) / 1000;
+
+      const h = Math.floor(time / 3600);
+      const m = Math.floor((time / 60) % 60);
+      const s = Math.ceil(time % 60);
+
+      const fightTime = `${h}小时${m}分${s}秒`;
+
+      const avgExp = Math.floor((this.fightGains.gainExp / time) * 60);
+      const avgFightCount = ((this.fightGains.fightCount / time) * 60).toFixed(
+        1
+      );
+      return {
+        goods: this.fightGains.goods, //战利品
+        gainExp: this.fightGains.gainExp, //获得经验
+        beginTime: new Date(this.fightGains.beginTime)
+          .toTimeString()
+          .slice(0, 8), //开始时间
+        roundCount: this.fightGains.roundCount, //回合数
+        fightCount: this.fightGains.fightCount, //战斗场数
+        fightTime: fightTime, //战斗时长
+        //endTime: endTime, //结束时间
+        avgExp: avgExp, //经验/分
+        avgFightCount: avgFightCount, //战斗场数/分
+
+        tips: "暂无收益，请开启战斗"
+      };
     }
   },
   mounted() {
     regHooks(this);
-
     const { email, password } = this.$route.params;
     this.initUser(email, password);
 
@@ -528,7 +623,10 @@ export default {
     setMessage: function(email, data) {
       messageTime = Date.now();
       data.time = this.getDateTime();
-
+      //记录战斗开始时间
+      this.fightGains.beginTime = this.fightGains.beginTime || messageTime;
+      //回合数+1
+      this.fightGains.roundCount++;
       const msg = data.round_arr.find(dr => dr.a_name === email);
       data.msg = [
         msg
@@ -546,6 +644,8 @@ export default {
         data.exp.forEach(item => {
           if (item.name == email) {
             data.msg.push(`获得经验[${item.exp || "没经验了"}]`);
+            this.fightGains.gainExp += Math.floor(item.exp);
+            this.fightGains.fightCount++;
           }
         });
         data.player_reward.forEach(item => {
@@ -559,6 +659,14 @@ export default {
               });
               if (reward.length > 0) {
                 data.msg.push(`战利品[${reward.join(",")}]`);
+                //获取战利品后,添加更新背包的状态
+                this.user.updateGoods = true;
+                //合并，更新战利品
+                reward.forEach(ele => {
+                  this.fightGains.goods.hasOwnProperty(ele)
+                    ? this.fightGains.goods[ele]++
+                    : (this.fightGains.goods[ele] = 1);
+                });
               }
             }
           }
@@ -566,6 +674,7 @@ export default {
       }
       if (data.win === 2) {
         data.msg.push("死亡");
+        this.fightGains.fightCount++;
       }
 
       this.$set(this.user, "message", data);
@@ -617,6 +726,18 @@ export default {
         return str.toString().padStart(2, "0");
       });
     },
+    //打开背包
+    openBag() {
+      console.log();
+      this.opened = !this.opened;
+      //更新背包状态为 true 且 opened 为true时 ，重置背包
+      if (this.user.updateGoods && this.opened) {
+        this.user.updateGoods = false;
+        this.user.goods = [];
+        this.user.goodsPage = 1;
+        this.game.getMyGoods();
+      }
+    }
   }
 };
 </script>
@@ -624,6 +745,11 @@ export default {
 .user {
   width: 100%;
   height: 100%;
+  p {
+    display: flex;
+    justify-content: space-between;
+  }
+
   .br {
     height: 5px;
     width: 100%;
@@ -637,6 +763,22 @@ export default {
       justify-content: space-between;
       padding: 5px 10px;
       border: 1px solid #d2d6d8;
+    }
+  }
+}
+.fight-gains {
+  ul {
+    li {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+    }
+    .goods {
+      flex-direction: column;
+      li {
+        padding: 2px 0 2px 10px;
+        color: #42b983;
+      }
     }
   }
 }
