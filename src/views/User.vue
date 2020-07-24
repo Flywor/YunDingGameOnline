@@ -3,61 +3,15 @@
     v-if="user"
     class="user"
   >
-    <p>状态：{{user.status}}&nbsp;{{ user.status_msg && `${user.status_msg}` }}
-
-      <Poptip
-        word-wrap
-        transfer
-        placement="bottom"
+    <p>
+      状态：{{user.status}}&nbsp;{{ user.status_msg && `${user.status_msg}` }}
+      <Button
+        size="small"
+        type="info"
+        @click="showGains = true"
       >
-        <Button
-          size="small"
-          type="info"
-        >
-          查看收益
-        </Button>
-        <div
-          class="fight-gains"
-          slot="content"
-        >
-          <div v-if="!fightGains.beginTime">
-            {{gains.tips}}
-          </div>
-          <ul v-else>
-            <li>
-              <span>开始时间:</span><span>{{gains.beginTime}}</span>
-            </li>
-            <li>
-              <span>战斗时长:</span><span>{{gains.fightTime}}</span>
-            </li>
-            <li>
-              <span>获得经验:</span><span>{{gains.gainExp}}</span>
-            </li>
-            <li class="goods">
-              <div>获得物品:</div>
-              <ul>
-                <li
-                  v-for="(value,key) in gains.goods"
-                  :key="key"
-                ><span>{{key}}:</span><span>{{value}}</span>
-                </li>
-              </ul>
-            </li>
-            <li>
-              <span>战斗回合数:</span><span>{{gains.roundCount}}</span>
-            </li>
-            <li>
-              <span>战斗场数:</span><span>{{gains.fightCount}}</span>
-            </li>
-            <li>
-              <span>经验/分钟:</span><span>{{gains.avgExp}}</span>
-            </li>
-            <li>
-              <span>战斗场数/分钟:</span><span>{{gains.avgFightCount}}</span>
-            </li>
-          </ul>
-        </div>
-      </Poptip>
+        查看收益
+      </Button>
     </p>
 
     <!-- 战斗统计 ↑ -->
@@ -137,7 +91,7 @@
           type="info"
           @click="openBag"
         >
-          {{opened?"关闭":"物品栏"}}
+          储物戒指
         </Button>
 
       </p>
@@ -148,9 +102,9 @@
     </template>
     <!-- 挖宝 ↓ -->
     <template>
-      <div class="br" />
       <template v-if="unusecbt">
         <template v-if="unusecbt.normal">
+          <div class="br" />
           检测到你有
           <span style="color: red">{{unusecbt.normal.num}}</span>
           张没鉴定的
@@ -176,6 +130,7 @@
           </template>
         </template>
         <template v-if="unusecbt.high">
+          <div class="br" />
           检测到你有
           <span style="color: red">{{unusecbt.high.num}}</span>
           张没鉴定的
@@ -406,24 +361,55 @@
       />
     </div>
     <!-- 战斗信息 ↑ -->
-    <div
-      v-if="opened"
-      class="goods"
-    >
-      <span
-        class="grid"
-        v-for="item in goods"
-        :key=item.id
-      >
-        <span>
-          {{item.name}}
-        </span>
-        <span>
-          {{item.num}}
-        </span>
-      </span>
-    </div>
-    <!-- 包包 ↑-->
+    <Modal v-model="opened" fullscreen title="储物戒指">
+      <Button v-for="item in goods" :key="item.id" type="info" size="small" style="margin: 0 0.3% 5px 0;width:33%;font-size:12px;" @click="e => {
+        readToUse = item;
+        readToUse.useNum = 1;
+      }">
+        {{item.name}}({{item.num}})
+      </Button>
+      <div slot="footer" style="text-align:center;font-size:12px;">
+        <p v-if="!readToUse">
+          去上面点一个物品
+        </p>
+        <template v-else>
+          {{readToUse.name}}
+          <InputNumber v-if="readToUse.goodsType !== '可装备的装备'" :max="readToUse.num" :min="1" style="margin: 0 4px;" v-model="readToUse.useNum"/>
+          <ButtonGroup size="small">
+            <Button v-if="['可装备的装备'].includes(readToUse.goodsType)" size="small" type="primary" @click="handleWearItem">
+              装备
+            </Button>
+            <Button v-if="['未鉴定的装备', '藏宝图', '技能书', '蛋'].includes(readToUse.goodsType)" size="small" type="primary" @click="handleUseItem">
+              使用
+            </Button>
+            <Button size="small" type="primary" @click="() => $Message.info('还没做嘤嘤嘤')">
+              出售
+            </Button>
+            <Button size="small" type="primary" @click="handleSellItem">
+              分解
+            </Button>
+          </ButtonGroup>
+        </template>
+      </div>
+    </Modal>
+    <Modal v-model="showGains" fullscreen footer-hide title="战斗收益">
+      <div v-if="!fightGains.beginTime">
+        {{gains.tips}}
+      </div>
+      <template v-else>
+        <CellGroup>
+          <Cell title="开始时间" :extra="`${gains.beginTime}`" />
+          <Cell title="战斗时长" :extra="`${gains.fightTime}`" />
+          <Cell title="获得经验" :extra="`${gains.gainExp}`" />
+          <Cell title="战斗回合数" :extra="`${gains.roundCount}`" />
+          <Cell title="战斗场数" :extra="`${gains.fightCount}`" />
+          <Cell title="经验/分钟" :extra="`${gains.avgExp}`" />
+          <Cell title="战斗场数/分钟" :extra="`${gains.avgFightCount}`" />
+          <Cell title="战利品" />
+        </CellGroup>
+        <Tag v-for="(value,key) in gains.goods" :key="key" color="pink">{{key}}({{value}})</Tag>
+      </template>
+    </Modal>
   </div>
 
 </template>
@@ -443,13 +429,15 @@ export default {
       config: configData,
       hightcbtTaskId: "5f01ee501a863c76d650525c",
       opened: false,
+      showGains: false,
       fightGains: {
         goods: {}, //战利品
         gainExp: 0, //获得经验
         beginTime: 0, //开始时间
         roundCount: 0, //回合数
         fightCount: 0 //战斗场数
-      }
+      },
+      readToUse: null
     };
   },
   watch: {
@@ -726,9 +714,8 @@ export default {
         return str.toString().padStart(2, "0");
       });
     },
-    //打开背包
+    // 打开背包
     openBag() {
-      console.log();
       this.opened = !this.opened;
       //更新背包状态为 true 且 opened 为true时 ，重置背包
       if (this.user.updateGoods && this.opened) {
@@ -737,6 +724,35 @@ export default {
         this.user.goodsPage = 1;
         this.game.getMyGoods();
       }
+    },
+    // 使用物品
+    async handleUseItem () {
+      const { useNum, id, name } = this.readToUse;
+      window.freshPackage = false
+      this.$Spin.show({ render: () => (<p>正在连续使用物品{name}{useNum}个，为避免请求次数过多和程序错乱，在此窗口关闭后再进行其他操作</p>) });
+      for (let i = 0; i < useNum; i++) {
+        this.game.useGoods(id);
+        await sleep(1100);
+      }
+      window.freshPackage = true;
+      this.game.userInfo();
+      // 重置背包
+      this.user.goods = [];
+      this.user.goodsPage = 1;
+      this.game.getMyGoods();
+      this.readToUse = null;
+      this.$Spin.hide();
+    },
+    // 装备物品
+    handleWearItem () {
+      const { id } = this.readToUse;
+      this.game.wearUserEquipment(id);
+    },
+     // 分解物品
+    handleSellItem () {
+      const { useNum, id, name } = this.readToUse;
+      this.game.sellGoods([{ id, num: useNum }]);
+      this.readToUse = null;
     }
   }
 };
@@ -753,17 +769,6 @@ export default {
   .br {
     height: 5px;
     width: 100%;
-  }
-  .goods {
-    display: flex;
-    flex-wrap: wrap;
-    .grid {
-      width: 50%;
-      display: flex;
-      justify-content: space-between;
-      padding: 5px 10px;
-      border: 1px solid #d2d6d8;
-    }
   }
 }
 .fight-gains {
@@ -782,4 +787,24 @@ export default {
     }
   }
 }
+</style>
+<style lang="less">
+.ivu-modal-header {
+  padding: 8px 4px!important;
+}
+.ivu-modal-close {
+  top: 0!important;
+}
+.ivu-modal-footer {
+  padding: 4px!important;
+}
+.ivu-modal-body {
+  padding: 0!important;
+  top: 44px!important;
+  bottom: 44px!important;
+}
+.ivu-cell {
+  padding: 4px 8px!important;
+}
+
 </style>

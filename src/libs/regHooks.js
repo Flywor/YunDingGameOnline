@@ -1,4 +1,7 @@
 import GameApi from './YunDingOnlineSDK'
+
+window.freshPackage = true
+
 // 暴露一个接口 用来接收 app 对象
 export default function (_app) {
     const app = _app;
@@ -258,7 +261,6 @@ export default function (_app) {
             app.$Message.error(data.msg);
             return;
         }
-
         let flag = true;
         for (let i = 0; i < data.data.goods.length; i++) {
             const good = data.data.goods[i];
@@ -266,7 +268,32 @@ export default function (_app) {
                 this.useGoods(good._id);
                 flag = false;
             } else {
-                let map, unusecbt, highcbt
+                let map, unusecbt, highcbt, goodsType
+                // 转换物品类型
+                switch (good.goods_type) {
+                    case '5eee25a1ba4d0b4c4ef605d0':
+                        goodsType = '蛋';
+                        break;
+                    case '5ec63cc24947081a6cd8d3a6':
+                        goodsType = '未鉴定的装备';
+                        break;
+                    case '5e77ee52b1012a6374d2bd1b':
+                        goodsType = '可装备的装备';
+                        break;
+                    case '5f01e52c0f80941f56ecc1ae':
+                        goodsType = '藏宝图';
+                        break;
+                    case '5ef04600544717379c820835':
+                        goodsType = '技能书';
+                        break;
+                    case '5ec63cb54947081a6cd8d3a5':
+                        goodsType = '材料';
+                        break;
+                    default:
+                        goodsType = `这个${good.goods_type}俺不知道`;
+                        break;
+                }
+
                 // 解析宝图位置
                 if (good.name && good.expand) {
                     map = JSON.parse(good.expand).map
@@ -282,7 +309,8 @@ export default function (_app) {
                     map,
                     unusecbt,
                     highcbt,
-                    name: good.name || good.goods.name
+                    name: good.name || good.goods.name,
+                    goodsType
                 });
             }
         }
@@ -316,6 +344,7 @@ export default function (_app) {
             app.$Message.error(data.msg);
             return;
         }
+        if (!window.freshPackage) return;
         this.userInfo();
         // 重置背包
         app.user.goods = [];
@@ -324,6 +353,36 @@ export default function (_app) {
     }
     useGoodsCb.hookMark = "regHooks.useGoodsCb";
     GameApi.regHookHandlers['connector.userHandler.useGoods'].push(useGoodsCb);
+
+    // 分解物品回调
+    let sellGoodsCb = function (data) {
+        if (data.code != 200) {
+            app.$Message.error(data.msg);
+            return;
+        }
+        this.userInfo();
+        // 重置背包
+        app.user.goods = [];
+        app.user.goodsPage = 1;
+        this.getMyGoods();
+    }
+    useGoodsCb.hookMark = "regHooks.sellGoodsCb";
+    GameApi.regHookHandlers['connector.userHandler.sellGoods'].push(sellGoodsCb);
+
+    // 佩戴拆卸装备
+    let wearUserEquipmentCb = function (data) {
+        if (data.code != 200) {
+            app.$Message.error(data.msg);
+            return;
+        }
+        this.userInfo();
+        // 重置背包
+        app.user.goods = [];
+        app.user.goodsPage = 1;
+        this.getMyGoods();
+    }
+    useGoodsCb.hookMark = "regHooks.wearUserEquipmentCb";
+    GameApi.regHookHandlers['connector.playerHandler.wearUserEquipment'].push(wearUserEquipmentCb);
 
     // 升级回调
     let upPlayerLevelCb = function (data) {
@@ -378,6 +437,7 @@ export default function (_app) {
             app.$Message.error(data.msg);
             return;
         }
+        this.getUserTask();
     }
     getCopyTaskCb.hookMark = "regHooks.getCopyTaskCb";
     GameApi.regHookHandlers['connector.playerHandler.getCopyTask'].push(getCopyTaskCb);

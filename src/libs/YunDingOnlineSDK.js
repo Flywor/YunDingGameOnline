@@ -1128,7 +1128,7 @@ GameApi.prototype.makeGoods = function (selectGoodsArr) {
 /**
 * 分解物品
 */
-GameApi.prototype.userSellGoods = function (selectGoodsArr) {
+GameApi.prototype.sellGoods = function (selectGoodsArr) {
     this.sendMessage({
         arr: selectGoodsArr
     }, "connector.userHandler.sellGoods");
