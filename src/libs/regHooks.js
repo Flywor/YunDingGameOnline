@@ -310,7 +310,9 @@ export default function (_app) {
                     unusecbt,
                     highcbt,
                     name: good.name || good.goods.name,
-                    goodsType
+                    goodsType,
+                    price: good.price,
+                    price_type: good.price_type
                 });
             }
         }
@@ -485,4 +487,82 @@ export default function (_app) {
     }
     wbtCb.hookMark = "regHooks.wbtCb";
     GameApi.regHookHandlers['connector.userHandler.wbt'].push(wbtCb);
+
+  // 卖货回调
+  let playerSellGoodsCb = function (data) {
+    console.log('sellGoodsCb', data, app.isTransfer)
+    if (data.code !== 200) {
+      app.$Message.error(data.msg)
+      return;
+    }
+    app.$Message.success(data.msg || '上架成功');
+
+    const { sell } = data.data || {}
+    // 是否开启了转移
+    if (app.isTransfer !== undefined && sell && sell._id) {
+      // 通知转移对象购买
+      console.log('Start buy', app.isTransfer, sell, Date.now())
+      try {
+        window.parent && window.parent.frames[app.isTransfer] && window.parent.frames[app.isTransfer].postMessage({
+          type: 'intercept',
+          // 固定买走全部
+          data: { id: sell._id, type: 2 }
+        })
+
+        // 卖货后如果200ms还没买走就发起取回
+        setTimeout(() => {
+          this.shelfMyGoods(sell._id)
+        }, 200)
+      } catch (e) {}
+    }
+
+    // 刷新背包？
+    this.userInfo();
+    // 重置背包
+    app.user.goods = [];
+    app.user.goodsPage = 1;
+    this.getMyGoods();
+  }
+  playerSellGoodsCb.hookMark = 'regHooks.playerSellGoodsCb'
+  GameApi.regHookHandlers['connector.playerHandler.sellGoods'].push(playerSellGoodsCb)
+
+  // 购买回调
+  let byPalyerGoodsCb = function (data) {
+    console.log('byCb', data, Date.now())
+    if (data.code !== 200) {
+      app.$Message.error(data.msg)
+      return;
+    }
+
+    // 刷新背包？
+    this.userInfo();
+    // 重置背包
+    app.user.goods = [];
+    app.user.goodsPage = 1;
+    this.getMyGoods();
+  }
+  byPalyerGoodsCb.hookMark = 'regHooks.byPalyerGoodsCb'
+  GameApi.regHookHandlers['connector.playerHandler.byPalyerGoods'].push(byPalyerGoodsCb)
+
+  // 取回获取回调
+  let shelfMyGoodsCb = function (data) {
+    console.log('shelfCb', data)
+    if (data.code === 200 && data.msg !== '没有物品') {
+      app.$Message.error('上架失败，货物已取回')
+      // 刷新背包？
+      app.user.goods = [];
+      app.user.goodsPage = 1;
+      this.getMyGoods();
+      return;
+    }
+  }
+  shelfMyGoodsCb.hookMark = 'regHooks.shelfMyGoodsCb'
+  GameApi.regHookHandlers['connector.userHandler.shelfMyGoods'].push(shelfMyGoodsCb)
+
+  // 整理背包回调
+  let allSellGoodsCb = function (data) {
+    console.log('allCb', data)
+  }
+  allSellGoodsCb.hookMark = 'regHooks.allSellGoodsCb'
+  GameApi.regHookHandlers['connector.userHandler.allSellGoods'].push(allSellGoodsCb)
 }

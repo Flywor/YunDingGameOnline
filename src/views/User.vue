@@ -362,10 +362,11 @@
     </div>
     <!-- 战斗信息 ↑ -->
     <Modal v-model="opened" fullscreen title="储物戒指">
-      <Button v-for="item in goods" :key="item.id" type="info" size="small" style="margin: 0 0.3% 5px 0;width:33%;font-size:12px;" @click="e => {
-        readToUse = item;
-        readToUse.useNum = 1;
-      }">
+    <div class="ivu-modal-header-inner" slot="header">
+      储物戒指
+      <a href="javascript:;" style="font-size:14px;font-weight: normal;margin-left:10px" @click="handlePack">整理</a>
+    </div>
+      <Button v-for="item in goods" :key="item.id" type="info" size="small" style="margin: 0 0.3% 5px 0;width:33%;font-size:12px;" @click="handleGoods(item)">
         {{item.name}}({{item.num}})
       </Button>
       <div slot="footer" style="text-align:center;font-size:12px;">
@@ -373,8 +374,20 @@
           去上面点一个物品
         </p>
         <template v-else>
-          {{readToUse.name}}
-          <InputNumber v-if="readToUse.goodsType !== '可装备的装备'" :max="readToUse.num" :min="1" style="margin: 0 4px;" v-model="readToUse.useNum"/>
+          <div>
+            {{readToUse.name}}
+            <InputNumber v-if="readToUse.goodsType !== '可装备的装备'" :max="readToUse.num" :min="1" style="margin: 0 4px;" v-model="readToUse.useNum" size="small" />
+          </div>
+          <div>
+            总价：
+            <InputNumber :min="readToUse.minPrice" style="margin: 0 4px;" v-model="readToUse.price" size="small" />
+          </div>
+          <div>
+            转移给：
+            <Select style="margin: 0 4px;width:80px" v-model="readToUse.buyer" size="small" placeholder="选择转移对象">
+              <Option v-for="item in users" :value="item.index" :key="item.index">{{ item.email }}</Option>
+            </Select>
+          </div>
           <ButtonGroup size="small">
             <Button v-if="['可装备的装备'].includes(readToUse.goodsType)" size="small" type="primary" @click="handleWearItem">
               装备
@@ -382,7 +395,7 @@
             <Button v-if="['未鉴定的装备', '藏宝图', '技能书', '蛋'].includes(readToUse.goodsType)" size="small" type="primary" @click="handleUseItem">
               使用
             </Button>
-            <Button size="small" type="primary" @click="() => $Message.info('还没做嘤嘤嘤')">
+            <Button size="small" type="primary" @click="handleSell">
               出售
             </Button>
             <Button size="small" type="primary" @click="handleSellItem">
@@ -426,6 +439,8 @@ export default {
     return {
       game: {},
       user: null,
+      // 当前加载的用户列表
+      users: [],
       config: configData,
       hightcbtTaskId: "5f01ee501a863c76d650525c",
       opened: false,
@@ -541,7 +556,7 @@ export default {
 
         tips: "暂无收益，请开启战斗"
       };
-    }
+    },
   },
   mounted() {
     regHooks(this);
@@ -555,8 +570,25 @@ export default {
         window.location.reload();
       }
     }, 60000);
+
+    // 启动通信功能
+    window.addEventListener('message', this.onMessage)
   },
   methods: {
+    // 收到消息
+    onMessage(event) {
+      if (typeof event.data !== 'object') return;
+      // 具体的协议分解
+      // intercent：代表截胡 - 也是抢购的意思
+      if (event.data.type === 'intercept') {
+        const sell = event.data.data || {}
+        if (sell && sell.id) {
+          // 开启购买
+          this.game.byPalyerGoods(sell.id, sell.type || 2)
+        }
+      }
+    },
+
     /**
      * 将技能保存到 localStorage 中
      * @param {*} 用户的所有信息
@@ -724,6 +756,14 @@ export default {
         this.user.goodsPage = 1;
         this.game.getMyGoods();
       }
+      let users = JSON.parse(localStorage.getItem('ydxxGame_userList') || '{}') || {};
+      this.users = Object.keys(users).map((email, index) => ({ email, index })).filter(v => v.email !== this.user.email)
+    },
+    // 整理背包
+    handlePack() {
+      this.user.goods = [];
+      this.user.goodsPage = 1;
+      this.game.getMyGoods();
     },
     // 使用物品
     async handleUseItem () {
@@ -748,10 +788,35 @@ export default {
       const { id } = this.readToUse;
       this.game.wearUserEquipment(id);
     },
+    // 操作物品
+    handleGoods(item) {
+      const minPrice = item.price_type === 2 ? Math.abs(item.price / 2 * 0.8) : 1
+      this.readToUse = {
+        id: item.id,
+        name: item.name,
+        price: minPrice,
+        useNum: 1,
+        min: minPrice,
+      }
+    },
      // 分解物品
     handleSellItem () {
       const { useNum, id, name } = this.readToUse;
       this.game.sellGoods([{ id, num: useNum }]);
+      this.readToUse = null;
+    },
+    // 出售物品 - 可以指定给某个具体的人防止截胡
+    handleSell() {
+      const { useNum, id, name, buyer, price } = this.readToUse;
+      // 判断条件
+      if (!price || !useNum) {
+        this.$Message.error('价钱或者数量必填')
+        return;
+      }
+      // 判断是否是转移
+      this.isTransfer = buyer
+      // 开启出售
+      this.game.playerSellGoods(id, price, useNum);
       this.readToUse = null;
     }
   }
@@ -806,5 +871,7 @@ export default {
 .ivu-cell {
   padding: 4px 8px!important;
 }
-
+.ivu-modal-fullscreen .ivu-modal-footer {
+  background: #fff;
+}
 </style>
