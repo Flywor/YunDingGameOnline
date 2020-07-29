@@ -7,7 +7,7 @@ export default function (_app) {
     const app = _app;
 
     // 创建空函数 屏蔽 onLeave onAdd 消息刷屏
-    let emptyCb = () => {};
+    let emptyCb = () => { };
     emptyCb.hookMark = 'regHooks.emptyCb';
     GameApi.regHookHandlers['onLeave'].push(emptyCb);
     GameApi.regHookHandlers['onAdd'].push(emptyCb);
@@ -153,7 +153,7 @@ export default function (_app) {
             if (data.data) {
                 app.$set(user, 'fighting', false)
             }
-            app.$delete(usner, 'team')
+            app.$delete(user, 'team')
             app.$delete(user, 'combatName')
             return;
         }
