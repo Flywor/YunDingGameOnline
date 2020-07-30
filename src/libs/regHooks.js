@@ -289,6 +289,15 @@ export default function (_app) {
                     case '5ec63cb54947081a6cd8d3a5':
                         goodsType = '材料';
                         break;
+                    case '5f01e4990f80941f56ecc1ac':
+                        goodsType = '法宝材料';
+                        break;
+                    case '5eedd0138822d61cf3d9548a':
+                        goodsType = '兽决';
+                        break;
+                    case '5eef5f0b0faad0b123d709d0':
+                        goodsType = '大补丹';
+                        break;
                     default:
                         goodsType = `这个${good.goods_type}俺不知道`;
                         break;
@@ -303,6 +312,7 @@ export default function (_app) {
                     }
                     unusecbt = true
                 }
+               
                 app.user.goods.push({
                     id: good._id,
                     num: good.count,
@@ -310,7 +320,8 @@ export default function (_app) {
                     unusecbt,
                     highcbt,
                     name: good.name || good.goods.name,
-                    goodsType
+                    goodsType,
+                    info:good.goods || good
                 });
             }
         }
@@ -452,7 +463,7 @@ export default function (_app) {
     }
     getUserTaskCb.hookMark = "regHooks.getUserTaskCb";
     GameApi.regHookHandlers['connector.userHandler.getUserTask'].push(getUserTaskCb);
-    
+
     // 完成任务回调
     let payUserTaskCb = function (data) {
         console.log(data)

@@ -361,25 +361,45 @@
       />
     </div>
     <!-- 战斗信息 ↑ -->
-    <Modal v-model="opened" fullscreen title="储物戒指">
-      <Button v-for="item in goods" :key="item.id" type="info" size="small" style="margin: 0 0.3% 5px 0;width:33%;font-size:12px;" @click="e => {
-        readToUse = item;
-        readToUse.useNum = 1;
-      }">
+    <Modal v-model="opened" fullscreen footer-hide>
+      <div slot="header" class="good-header">
+            <span>储物戒指</span>
+             <Input v-model.lazy="searchText" suffix="ios-search" placeholder="名称、说明、属性值" style="width: 66%" />
+      </div>
+      <div class="goods-box">
+        <Button v-for="item in goods" :key="item.id" size="small" class="good-name" :style="item.style" @click="goodsHandle(item)">
         {{item.name}}({{item.num}})
       </Button>
-      <div slot="footer" style="text-align:center;font-size:12px;">
+      </div>
+      <div class="good-info" >
         <p v-if="!readToUse">
           去上面点一个物品
         </p>
         <template v-else>
-          {{readToUse.name}}
-          <InputNumber v-if="readToUse.goodsType !== '可装备的装备'" :max="readToUse.num" :min="1" style="margin: 0 4px;" v-model="readToUse.useNum"/>
-          <ButtonGroup size="small">
+          <div class="info-box">
+            <div class="basci-info">
+              <span :style="readToUse.style">
+              {{readToUse.name}}
+              </span>
+              <span :style="readToUse.style">价格：{{readToUse.price}}</span>
+              <span :style="readToUse.style">{{readToUse.info}}</span>
+            </div>
+            <template v-if="readToUse.eq_info">
+              <div class="eq-info">
+                <span :style="readToUse.style" v-for="(value,key) in eq_info" :key="key">
+                <span>{{key}}:</span>
+                <span>{{value}}</span>
+                </span>
+              </div>
+              </template>
+          </div>
+          <div class="button-box">
+            <InputNumber v-if="readToUse.goodsType !== '可装备的装备'" :max="readToUse.num" :min="1" v-model="readToUse.useNum"/>
+            <ButtonGroup size="small" vertical>
             <Button v-if="['可装备的装备'].includes(readToUse.goodsType)" size="small" type="primary" @click="handleWearItem">
               装备
             </Button>
-            <Button v-if="['未鉴定的装备', '藏宝图', '技能书', '蛋'].includes(readToUse.goodsType)" size="small" type="primary" @click="handleUseItem">
+            <Button v-if="['未鉴定的装备', '藏宝图', '技能书', '蛋', '大补丹'].includes(readToUse.goodsType)" size="small" type="primary" @click="handleUseItem">
               使用
             </Button>
             <Button size="small" type="primary" @click="() => $Message.info('还没做嘤嘤嘤')">
@@ -389,6 +409,8 @@
               分解
             </Button>
           </ButtonGroup>
+          
+          </div>
         </template>
       </div>
     </Modal>
@@ -437,7 +459,8 @@ export default {
         roundCount: 0, //回合数
         fightCount: 0 //战斗场数
       },
-      readToUse: null
+      readToUse: null,
+      searchText: ""
     };
   },
   watch: {
@@ -509,7 +532,60 @@ export default {
     },
     //背包
     goods() {
-      return this.user.goods;
+      
+      let arr = [];
+      if (this.user.goods) {
+        
+        this.user.goods.forEach(ele=>{
+         
+        const { name, num, id } = ele;
+        const price_type = [null, '灵石', '仙石'];
+        const price = ele.info.price_type ? `${ele.info.price/ele.info.price_type}${price_type[ele.info.price_type]}` : null;  //价格
+        const info = ele.info.info; //描述
+        const style =ele.info.style; //文字样式
+        const goodsType =ele.goodsType; //文字样式
+        let obj = {
+          name, num, id, price, info, style, goodsType
+        }
+        if (ele.goodsType === '可装备的装备') {
+          const eq_info = {
+            '佩戴等级' : ele.info.wear_level,
+            '物理伤害' : ele.info.physical_damage,
+            '物理防御' : ele.info.physical_defense,
+            '魔法伤害' : ele.info.magic_damage,
+            '魔法防御' : ele.info.magic_defense,
+            '治疗能力' : ele.info.restore_damage,
+            '气血' : ele.info.a,
+            '速度' : ele.info.speed,
+            '体质' : ele.info.con,
+            '魔力' : ele.info.int,
+            '力量' : ele.info.vit,
+            '耐力' : ele.info.str,
+            '敏捷' : ele.info.agi,
+            '物理暴击' : ele.info.physical_crit,
+            '法术暴击' : ele.info.magic_crit,
+            '特技' : ele.info.skill,
+            '评分' : ele.info.score
+          }
+          obj.eq_info = eq_info
+           
+        }
+        arr.push(obj)
+      })
+      }
+      
+      if (this.searchText) {
+        const list = arr.filter(ele=> {
+          let str = `${ele.name}${ele.info}`
+          if (ele.eq_info) {
+            str += JSON.stringify(ele.eq_info)
+          }
+          return str.includes(this.searchText)
+        }) 
+        return  list
+      }
+
+      return arr;
     },
     gains() {
       //战斗时长 s
@@ -541,6 +617,22 @@ export default {
 
         tips: "暂无收益，请开启战斗"
       };
+    },
+    eq_info(){
+      let obj = {};
+      if (this.readToUse.eq_info) {
+        const object = this.readToUse.eq_info
+        for (const key in object) {
+          if (object.hasOwnProperty(key)) {
+          const element = object[key];
+            if(element){
+              obj[key] = element
+            }
+          }
+      }
+      }
+      
+      return obj
     }
   },
   mounted() {
@@ -717,6 +809,8 @@ export default {
     // 打开背包
     openBag() {
       this.opened = !this.opened;
+      this.readToUse = null;
+      this.searchText = "";
       //更新背包状态为 true 且 opened 为true时 ，重置背包
       if (this.user.updateGoods && this.opened) {
         this.user.updateGoods = false;
@@ -727,6 +821,7 @@ export default {
     },
     // 使用物品
     async handleUseItem () {
+     
       const { useNum, id, name } = this.readToUse;
       window.freshPackage = false
       this.$Spin.show({ render: () => (<p>正在连续使用物品{name}{useNum}个，为避免请求次数过多和程序错乱，在此窗口关闭后再进行其他操作</p>) });
@@ -753,6 +848,12 @@ export default {
       const { useNum, id, name } = this.readToUse;
       this.game.sellGoods([{ id, num: useNum }]);
       this.readToUse = null;
+    },
+
+    goodsHandle(item){
+        this.readToUse = item;
+        this.readToUse.useNum = 1;
+
     }
   }
 };
@@ -800,11 +901,57 @@ export default {
 }
 .ivu-modal-body {
   padding: 0!important;
-  top: 44px!important;
-  bottom: 44px!important;
 }
-.ivu-cell {
-  padding: 4px 8px!important;
+
+
+.good-header{
+  display: flex;
+  justify-content:space-between;
+  align-items: center;
+  padding-right: 32px;
+  .ivu-input-with-suffix{
+    font-size: 12px;
+  }
+}
+.good-info{
+  box-shadow: 0 3px 10px;  
+  font-size:12px;
+  background: #fff;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  position: fixed;
+  bottom: 0;
+}
+.goods-box{
+   padding-bottom: 180px;
+  .good-name{
+  margin: 0 0.3% 5px 0;
+  width:49%;
+  font-size:12px!important;
+ 
+}
+}
+
+
+
+.info-box{
+  padding-right: 20px;
+  .basci-info, .eq-info{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+
+}
+.button-box{
+  display: flex;
+  flex-direction: column;
+  .ivu-btn{
+    margin-top: 2px!important;
+  }
 }
 
 </style>
