@@ -29,7 +29,7 @@
           &nbsp;
           <a @click="deleteUser(user.email)">删除</a>
         </div>
-        <iframe ref="userFrame" :src="`${baseUrl}#/user/${user.email}/${user.password}`" />
+        <iframe ref="userFrame" :src="`${baseUrl}#/user/${user.email}/${encodeURI(user.password)}`" />
       </Card>
     </div>
   </div>
@@ -92,6 +92,8 @@ export default {
       * @param {*} event
       */
     onAddUser: function (email, passwd) {
+      //编码passwd
+      passwd = encodeURI(passwd)
       // 保存账号密码
       this.saveStorageUser(email, passwd);
       // 添加进去
