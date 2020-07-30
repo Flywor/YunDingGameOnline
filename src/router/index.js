@@ -12,7 +12,7 @@ Vue.use(VueRouter)
       component: Home
     },
     {
-      path: '/user/:email/:password',
+      path: '/user/:email',
       name: 'user',
       component: User
     }

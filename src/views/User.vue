@@ -637,8 +637,10 @@ export default {
   },
   mounted() {
     regHooks(this);
-    const { email, password } = this.$route.params;
-    this.initUser(email, password);
+    const { email } = this.$route.params;
+    let user = this.getStorageAccount(email)
+    console.log(user)
+    this.initUser(email, user.password);
 
     // 每隔1分钟检测有没有战斗信息更新
     setInterval(() => {
@@ -649,6 +651,14 @@ export default {
     }, 60000);
   },
   methods: {
+    /**
+     * 从 localStorage 中取出账号密码
+     * @param {*} email
+     */
+    getStorageAccount: function (email) {
+        let users = JSON.parse(localStorage.getItem('ydxxGame_userList') || '{}') || {};
+        return {email: email, password: users[email]}
+    },
     /**
      * 将技能保存到 localStorage 中
      * @param {*} 用户的所有信息
