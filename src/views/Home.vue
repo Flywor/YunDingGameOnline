@@ -29,7 +29,7 @@
           &nbsp;
           <a @click="deleteUser(user.email)">删除</a>
         </div>
-        <iframe ref="userFrame" :src="`${baseUrl}#/user/${user.email}/${encodeURI(user.password)}`" />
+        <iframe ref="userFrame" :src="`${baseUrl}#/user/${user.email}`" />
       </Card>
     </div>
   </div>
