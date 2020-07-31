@@ -496,4 +496,19 @@ export default function (_app) {
     }
     wbtCb.hookMark = "regHooks.wbtCb";
     GameApi.regHookHandlers['connector.userHandler.wbt'].push(wbtCb);
+    // 合成物品回调
+    let makeGoodsCb = function (data) {
+        if (data.code != 200) {
+            app.$Message.error(data.msg);
+            return;
+        }
+        app.$Message.success(data.msg);
+
+        // 重置背包
+        app.user.goods = [];
+        app.user.goodsPage = 1;
+        this.getMyGoods();
+    }
+    makeGoodsCb.hookMark = "regHooks.makeGoodsCb";
+    GameApi.regHookHandlers['connector.userHandler.makeGoods'].push(makeGoodsCb);
 }
