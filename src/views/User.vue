@@ -386,7 +386,7 @@
             </div>
             <template v-if="readToUse.eq_info">
               <div class="eq-info">
-                <span :style="readToUse.style" v-for="(value,key) in eq_info" :key="key">
+                <span :style="readToUse.style" v-for="(value,key) in readToUse.eq_info" :key="key">
                 <span>{{key}}:</span>
                 <span>{{value}}</span>
                 </span>
@@ -548,7 +548,7 @@ export default {
           name, num, id, price, info, style, goodsType
         }
         if (ele.goodsType === '可装备的装备') {
-          const eq_info = {
+          const eq_data = {
             '佩戴等级' : ele.info.wear_level,
             '物理伤害' : ele.info.physical_damage,
             '物理防御' : ele.info.physical_defense,
@@ -559,13 +559,22 @@ export default {
             '速度' : ele.info.speed,
             '体质' : ele.info.con,
             '魔力' : ele.info.int,
-            '力量' : ele.info.vit,
-            '耐力' : ele.info.str,
+            '力量' : ele.info.str,
+            '耐力' : ele.info.vit,
             '敏捷' : ele.info.agi,
             '物理暴击' : ele.info.physical_crit,
             '法术暴击' : ele.info.magic_crit,
-            '特技' : ele.info.skill,
+            '特技' : ele.info.skill?`${ele.info.skill.name}--${ele.info.skill.info}`:'',
             '评分' : ele.info.score
+          }
+          let eq_info = {}
+          for (const key in eq_data) {
+            if (eq_data.hasOwnProperty(key)) {
+              const element = eq_data[key];
+              if(element){
+                eq_info[key] = element
+              }
+            }
           }
           obj.eq_info = eq_info
            
@@ -580,6 +589,7 @@ export default {
           if (ele.eq_info) {
             str += JSON.stringify(ele.eq_info)
           }
+          console.log(str);
           return str.includes(this.searchText)
         }) 
         return  list
@@ -617,22 +627,6 @@ export default {
 
         tips: "暂无收益，请开启战斗"
       };
-    },
-    eq_info(){
-      let obj = {};
-      if (this.readToUse.eq_info) {
-        const object = this.readToUse.eq_info
-        for (const key in object) {
-          if (object.hasOwnProperty(key)) {
-          const element = object[key];
-            if(element){
-              obj[key] = element
-            }
-          }
-      }
-      }
-      
-      return obj
     }
   },
   mounted() {
