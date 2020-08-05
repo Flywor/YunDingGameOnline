@@ -7,7 +7,7 @@ export default function (_app) {
     const app = _app;
 
     // 创建空函数 屏蔽 onLeave onAdd 消息刷屏
-    let emptyCb = () => { };
+    let emptyCb = () => {};
     emptyCb.hookMark = 'regHooks.emptyCb';
     GameApi.regHookHandlers['onLeave'].push(emptyCb);
     GameApi.regHookHandlers['onAdd'].push(emptyCb);
@@ -54,6 +54,7 @@ export default function (_app) {
         this.getMyGoods();
         // 获取技能信息
         this.getMySkill();
+        this.getMyPet();
     }
     loginCb.hookMark = "regHooks.loginCb";
     GameApi.regHookHandlers['gate.gateHandler.queryEntry'].push(loginCb);
@@ -218,7 +219,7 @@ export default function (_app) {
     // 战斗开始
     let onStartBatCb = function (data) {
         const user = app.user
-        this.roundOperating(user.skilltype || '1', user.skillid || '1', '', user.team._id);
+        this.roundOperating(user.skilltype || '1', user.skillid || '1', user.target || '', user.team ? user.team._id : '');
     }
     onStartBatCb.hookMark = "regHooks.onStartBatCb";
     GameApi.regHookHandlers['onStartBat'].push(onStartBatCb);
@@ -312,7 +313,7 @@ export default function (_app) {
                     }
                     unusecbt = true
                 }
-               
+
                 app.user.goods.push({
                     id: good._id,
                     num: good.count,
@@ -321,7 +322,7 @@ export default function (_app) {
                     highcbt,
                     name: good.name || good.goods.name,
                     goodsType,
-                    info:good.goods || good
+                    info: good.goods || good
                 });
             }
         }
@@ -443,7 +444,7 @@ export default function (_app) {
 
     // 领取高级宝图任务
     let getCopyTaskCb = function (data) {
-        console.log(data)
+        
         if (data.code != 200) {
             app.$Message.error(data.msg);
             return;
@@ -466,7 +467,7 @@ export default function (_app) {
 
     // 完成任务回调
     let payUserTaskCb = function (data) {
-        console.log(data)
+        
         if (data.code != 200) {
             app.$Message.error(data.msg);
             return;
@@ -511,4 +512,109 @@ export default function (_app) {
     }
     makeGoodsCb.hookMark = "regHooks.makeGoodsCb";
     GameApi.regHookHandlers['connector.userHandler.makeGoods'].push(makeGoodsCb);
+
+
+
+    //获取宠物信息
+    let getMyPetCb = function (data) {
+        if (data.code != 200) {
+            app.$Message.error(data.msg);
+            return;
+        }
+
+        app.$set(app.user, 'myPets', data.data.data);
+    }
+
+
+    getMyPetCb.hookMark = "regHooks.getMyPetCb";
+    GameApi.regHookHandlers['connector.userHandler.getMyPet'].push(getMyPetCb);
+
+    //宠物升级、加点，放生
+
+    let upUserPetLevelCb = function (data) {
+        if (data.code != 200) {
+            app.$Message.error(data.msg);
+            return;
+        }
+
+        this.getMyPet()
+    }
+
+
+    upUserPetLevelCb.hookMark = "regHooks.upUserPetLevelCb";
+    GameApi.regHookHandlers['connector.userHandler.upUserPetLevel'].push(upUserPetLevelCb);
+
+    //宠物出战
+
+    let playUserPetCb = function (data) {
+        if (data.code != 200) {
+            app.$Message.error(data.msg);
+            return;
+        }
+        const msg = data.data.status ? `${data.data.name}参战成功` : `${data.data.name}休息成功`
+        app.$Message.success(msg);
+        this.getMyPet()
+    }
+
+
+    playUserPetCb.hookMark = "regHooks.playUserPetCb";
+    GameApi.regHookHandlers['connector.userHandler.playUserPet'].push(playUserPetCb);
+
+
+    //宠物幻化
+
+    let turnIntoPetCb = function (data) {
+        if (data.code != 200) {
+            app.$Message.error(data.msg);
+            return;
+        }
+        app.$Message.success(data.msg);
+        this.getMyPet()
+    }
+
+    turnIntoPetCb.hookMark = "regHooks.turnIntoPetCb";
+    GameApi.regHookHandlers['connector.userHandler.turnIntoPet'].push(turnIntoPetCb);
+
+    //预览合宠
+
+    let getNewPetCb = function (data) {
+        if (data.code != 200) {
+            app.$Message.error(data.msg);
+            return;
+        }
+        app.$Message.success(data.msg);
+        this.getMyPet()
+    }
+
+    getNewPetCb.hookMark = "regHooks.getNewPetCb";
+    GameApi.regHookHandlers['connector.userHandler.getNewPet'].push(getNewPetCb);
+
+    //确认合宠
+
+    let fitPetCb = function (data) {
+        if (data.code != 200) {
+            app.$Message.error(data.msg);
+            return;
+        }
+        app.$Message.success(data.msg);
+        this.getMyPet()
+    }
+
+    fitPetCb.hookMark = "regHooks.fitPetCb";
+    GameApi.regHookHandlers['connector.userHandler.fitPet'].push(fitPetCb);
+
+    //打书
+    let addUserPetSkillCb = function (data) {
+        if (data.code != 200) {
+            app.$Message.error(data.msg);
+            return;
+        }
+        app.$Message.success(data.msg);
+        this.getMyPet()
+    }
+
+    addUserPetSkillCb.hookMark = "regHooks.addUserPetSkillCb";
+    GameApi.regHookHandlers['connector.userHandler.addUserPetSkill'].push(addUserPetSkillCb);
+
+
 }

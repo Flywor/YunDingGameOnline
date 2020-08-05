@@ -5,13 +5,29 @@
   >
     <p>
       状态：{{user.status}}&nbsp;{{ user.status_msg && `${user.status_msg}` }}
-      <Button
-        size="small"
-        type="info"
-        @click="showGains = true"
-      >
-        查看收益
-      </Button>
+      <ButtonGroup size="small">
+        <Button
+          size="small"
+          type="info"
+          @click="showEqsInfo = true"
+        >
+          装备
+        </Button>
+        <Button
+          size="small"
+          type="info"
+          @click="showUserInfo = true"
+        >
+          属性
+        </Button>
+        <Button
+          size="small"
+          type="info"
+          @click="showGains = true"
+        >
+          收益
+        </Button>
+      </ButtonGroup>
     </p>
 
     <!-- 战斗统计 ↑ -->
@@ -347,7 +363,21 @@
         </template>
       </div>
     </Poptip>
+    <Button
+      size="small"
+      type="info"
+      @click="catchPets"
+      style="margin:5px"
+    >捕捉</Button>
+    <span style="color:#d2d4d6;font-size:12px">(勉强能用)</span>
     <!-- 技能 ↑ -->
+    <div class="br" />
+    宠物：
+    <Button
+      size="small"
+      type="info"
+      @click="showMypets=true"
+    >查看</Button>
     <div class="br" />
     <!-- 战斗信息 ↓ -->
     <div v-if="'object' == typeof user.message">
@@ -361,6 +391,7 @@
       />
     </div>
     <!-- 战斗信息 ↑ -->
+    <!-- 背包↓ -->
     <Modal
       v-model="opened"
       fullscreen
@@ -419,10 +450,6 @@
                 >
                   <span :style="key | addStyle">{{key}}:</span>
                   <span :style="key | addStyle">{{value}}</span>
-                  <span
-                    v-if="key==='评分'"
-                    style="color:red;font-weight: 600;"
-                  >（憨憨作者评分）</span>
                 </span>
               </div>
             </template>
@@ -489,6 +516,8 @@
         </template>
       </div>
     </Modal>
+    <!-- 背包↑ -->
+    <!-- 收益↓ -->
     <Modal
       v-model="showGains"
       fullscreen
@@ -537,6 +566,262 @@
         >{{key}}({{value}})</Tag>
       </template>
     </Modal>
+    <!-- 收益↑ -->
+    <!-- 人物装备↓ -->
+    <Modal
+      v-model="showEqsInfo"
+      fullscreen
+      footer-hide
+      title="装备信息"
+    >
+      <Collapse simple>
+        <Panel
+          :name="index | getIndex"
+          v-for="(item,index) in eqsInfo"
+          :key="item.id"
+        > <img
+            :src="item.img"
+            class="eq-img"
+          >
+          <span :style="item.style">{{item.name}}</span>
+          <div slot="content">
+            <div
+              :style="`padding:2px;${item.style}`"
+              v-for="(value,key) in item.info"
+              :key="key"
+            >
+              <span :style="key | addStyle">{{key}}：</span>
+              <span :style="key | addStyle">{{value}}</span>
+            </div>
+          </div>
+
+        </Panel>
+      </Collapse>
+    </Modal>
+    <!-- 人物装备↑ -->
+    <!-- 人物属性↓ -->
+    <Modal
+      v-model="showUserInfo"
+      fullscreen
+      footer-hide
+      title="人物属性"
+    >
+      <CellGroup>
+        <Cell
+          v-for="(value, key) in userInfo"
+          :key="key"
+          :title="key"
+          :extra="`${value}`"
+        />
+      </CellGroup>
+    </Modal>
+    <!-- 人物属性↑ -->
+    <!-- 宠物信息↓ -->
+    <Modal
+      v-model="showMypets"
+      fullscreen
+      footer-hide
+      title="宠物信息"
+    >
+      <Tabs
+        v-model="tabPaneName"
+        size="small"
+      >
+        <TabPane
+          :label="item.name"
+          :name="`name${index+1}`"
+          v-for="(item, index) in petsInfo"
+          :key="item.id"
+        >
+
+          <Divider size="small">状态：{{item.status?'已参战':'休息中'}}</Divider>
+          <p
+            style="padding:5px"
+            v-if="item.skills.length === 0"
+          >
+            无技能
+          </p>
+          <Poptip
+            v-else
+            word-wrap
+            transfer
+            width="200"
+            trigger="hover"
+            v-for="(skill,index) in item.skills"
+            :key="index"
+            :content="skill.info"
+          >
+            <Button
+              :style="skill.style"
+              size="small"
+            >{{skill.name}}</Button>
+          </Poptip>
+
+          <Table
+            v-if="tabPaneName === `name${index+1}`"
+            :show-header="false"
+            :columns="columns"
+            :data="item.data"
+            border
+          ></Table>
+          <ButtonGroup
+            size="small"
+            shape="circle"
+            class="pet-btn"
+          >
+            <Button
+              size="small"
+              type="primary"
+              @click="handlePet(item,3)"
+            >放生</Button>
+            <Button
+              size="small"
+              type="primary"
+              @click="handlePet(item,4)"
+            >幻化</Button>
+            <Button
+              size="small"
+              type="primary"
+              @click="handlePet(item,1)"
+            >升级</Button>
+            <Button
+              size="small"
+              type="primary"
+              @click="handlePet(item,2,1)"
+            >全力</Button>
+            <Button
+              size="small"
+              type="primary"
+              @click="handlePet(item,2,2)"
+            >全魔</Button>
+            <Button
+              size="small"
+              type="primary"
+              @click="handlePet(item,5)"
+            >{{item.status?"休息":"参战"}}</Button>
+          </ButtonGroup>
+          <ButtonGroup
+            size="small"
+            shape="circle"
+            class="pet-btn"
+          >
+            <Button
+              size="small"
+              type="success"
+              @click="handlePet(item, 6)"
+            >合宠</Button>
+            <Button
+              size="small"
+              type="success"
+              @click="handlePet(item, 7)"
+            >打书</Button>
+          </ButtonGroup>
+
+        </TabPane>
+      </Tabs>
+
+    </Modal>
+    <!-- 宠物信息↑ -->
+    <!-- 防误操作modal -->
+    <Modal
+      v-model="modal"
+      :styles="{top: '85px'}"
+    >
+      <p
+        slot="header"
+        style="color:#f60;text-align:center"
+      >
+        <Icon type="ios-information-circle"></Icon>
+        <span>确定{{handleData.name}}？</span>
+      </p>
+      <div style="text-align:center">
+        <img
+          v-if="handleData.type<6"
+          src="https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1593343846064&di=97a86fe902b9754de368f02e336e4eab&imgtype=0&src=http%3A%2F%2Fwww.11xzb.com%2Fd%2Ffile%2Fmoban5%2F201909020832%2F1567158444899421.png"
+          alt=""
+          style="width:120px;padding-top:5px"
+        >
+        <!-- 合宠 -->
+        <div
+          v-else-if="handleData.type===6"
+          class="slelect-box"
+        >
+          <Select
+            v-model="pet1"
+            size="small"
+          >
+            <Option
+              v-for="item in petList"
+              :disabled="[item.status,item.value,pet2] | disabled"
+              :value="item.value"
+              :key="item.value"
+            >{{ item.label }}</Option>
+          </Select>
+          <p>技能：{{selectPet1}}</p>
+          <Select
+            v-model="pet2"
+            size="small"
+          >
+            <Option
+              v-for="item in petList"
+              :disabled="[item.status,item.value,pet1] | disabled"
+              :value="item.value"
+              :key="item.value"
+            >{{ item.label }}</Option>
+          </Select>
+          <p>技能：{{selectPet2}}</p>
+        </div>
+        <!-- 打书 -->
+        <div
+          v-else
+          class="slelect-box"
+        >
+          <Select
+            v-model="pet1"
+            size="small"
+          >
+            <Option
+              v-for="item in petList"
+              :disabled="[item.status,item.value,pet2] | disabled"
+              :value="item.value"
+              :key="item.value"
+            >{{ item.label }}</Option>
+          </Select>
+          <p>技能：{{selectPet1}}</p>
+          <Select
+            v-model="pet2"
+            size="small"
+          >
+            <Option
+              v-for="item in bookList"
+              :value="item.value"
+              :key="item.value"
+            >{{ item.label }}</Option>
+          </Select>
+        </div>
+
+        <p v-if='handleData.type === 1'>点击确认继续升级，或者点击取消关闭面板</p>
+        <p v-if='handleData.type === 3 && handleData.data.status===1'>宠物正在参战...</p>
+
+      </div>
+
+      <div
+        slot="footer"
+        style="text-align:center"
+      >
+        <Button
+          size="small"
+          @click="modal=false"
+        >取消</Button>
+        <Button
+          type="primary"
+          size="small"
+          :disabled="handleData.type === 3 && handleData.data.status===1"
+          @click="confirmHandle"
+        >确认</Button>
+      </div>
+    </Modal>
+
   </div>
 
 </template>
@@ -557,6 +842,9 @@ export default {
       hightcbtTaskId: "5f01ee501a863c76d650525c",
       opened: false,
       showGains: false,
+      showEqsInfo: false,
+      showUserInfo: false,
+      showMypets: false,
       fightGains: {
         goods: {}, //战利品
         gainExp: 0, //获得经验
@@ -567,6 +855,31 @@ export default {
       readToUse: null,
       searchText: "",
       selectedGoods: [],
+      tabPaneName: "name1",
+      columns: [
+        {
+          title: "column1",
+          key: "column1",
+          align: "center",
+        },
+        {
+          title: "column2",
+          key: "column2",
+          width: 85,
+          align: "center",
+        },
+        {
+          title: "column3",
+          key: "column3",
+          width: 65,
+          align: "center",
+        },
+      ],
+      modal: false,
+      handleData: {},
+      pet1: "",
+      pet2: "",
+      target: "粉红海兔",
     };
   },
   watch: {
@@ -599,6 +912,14 @@ export default {
         return "color:orchid;";
       }
       return "";
+    },
+    getIndex(val) {
+      const index = val + 1;
+      return index.toString();
+    },
+    //参战宠物和重复不能选
+    disabled(val) {
+      return val[0] ? true : false || val[1] === val[2];
     },
   },
   computed: {
@@ -680,36 +1001,7 @@ export default {
             selected: selected ? selected.num : 0,
           };
           if (ele.goodsType === "可装备的装备") {
-            const eq_data = {
-              佩戴等级: ele.info.wear_level,
-              物理伤害: ele.info.physical_damage,
-              物理防御: ele.info.physical_defense,
-              魔法伤害: ele.info.magic_damage,
-              魔法防御: ele.info.magic_defense,
-              治疗能力: ele.info.restore_damage,
-              气血: ele.info.a,
-              速度: ele.info.speed,
-              体质: ele.info.con,
-              魔力: ele.info.int,
-              力量: ele.info.str,
-              耐力: ele.info.vit,
-              敏捷: ele.info.agi,
-              物理暴击: ele.info.physical_crit,
-              法术暴击: ele.info.magic_crit,
-              特技: ele.info.skill
-                ? `${ele.info.skill.name}--${ele.info.skill.info}`
-                : "",
-              评分: ele.info.score,
-            };
-            let eq_info = {};
-            for (const key in eq_data) {
-              if (eq_data.hasOwnProperty(key)) {
-                const element = eq_data[key];
-                if (element) {
-                  eq_info[key] = element;
-                }
-              }
-            }
+            const eq_info = this.getEqsInfo(ele.info);
             obj.eq_info = eq_info;
           }
           arr.push(obj);
@@ -759,6 +1051,158 @@ export default {
 
         tips: "暂无收益，请开启战斗",
       };
+    },
+    eqsInfo() {
+      let arr = [];
+      this.user.userEqs &&
+        this.user.userEqs.forEach((ele) => {
+          const obj = this.getEqsInfo(ele);
+          const { name, style, img } = ele;
+          arr.push({
+            name,
+            style,
+            img,
+            info: obj,
+          });
+        });
+      return arr;
+    },
+    userInfo() {
+      const obj = this.user.myInfo;
+      let info = {};
+      if (obj) {
+        info = {
+          等级: obj.level,
+          经验: Math.round(obj.exp),
+          气血: obj.hp_cap,
+          魔法: obj.mp,
+          命中: obj.hit,
+          物理伤害: obj.physical_damage,
+          物理防御: obj.physical_defense,
+          魔法伤害: obj.magic_damage,
+          魔法防御: obj.magic_defense,
+          治疗能力: obj.restore_damage,
+          速度: obj.speed,
+          物理暴击: obj.physical_crit,
+          法术暴击: obj.magic_crit,
+          体质: obj.con,
+          魔力: obj.int,
+          力量: obj.str,
+          耐力: obj.vit,
+          敏捷: obj.agi,
+          潜力: obj.potential_num,
+          躲避: obj.dodge,
+          活力: Math.round(obj.vitality_num),
+          气血储备: Math.round(obj.hp_store),
+          魔法储备: Math.round(obj.mp_store),
+          宝宝经验: Math.round(obj.pet_exp),
+        };
+      }
+
+      return info;
+    },
+    petsInfo() {
+      const arr = this.user.myPets;
+      let pets = [];
+      const type = ["普通", "稀有", "传说", "PY"];
+      arr &&
+        arr.forEach((ele) => {
+          const { skill, _id, name, status } = ele;
+          const data = [
+            {
+              column1: `等级：${ele.level}`,
+              column2: `类型：${type[ele.type]}`,
+              column3: `成长：${ele.growing_num.toFixed(2)}`,
+            },
+            {
+              column1: `气血：${Math.round(ele.hp)}`,
+              column2: `魔法：${Math.round(ele.mp)}`,
+              column3: `命中：${Math.round(ele.hit)}`,
+            },
+            {
+              column1: `攻击资质：${ele.str_zz}`,
+              column2: `物理伤害：${Math.round(ele.physical_damage)}`,
+              column3: `力量：${ele.str}`,
+            },
+            {
+              column1: `法力资质：${ele.int_zz}`,
+              column2: `魔法伤害：${Math.round(ele.magic_damage)}`,
+              column3: `魔力：${ele.int}`,
+            },
+            {
+              column1: `体力资质：${ele.con_zz}`,
+              column2: `魔法防御：${Math.round(ele.magic_defense)}`,
+              column3: `体质：${ele.con}`,
+            },
+            {
+              column1: `防御资质：${ele.vit_zz}`,
+              column2: `物理防御：${Math.round(ele.physical_defense)}`,
+              column3: `耐力：${ele.vit}`,
+            },
+
+            {
+              column1: `速资质度：${ele.speed_zz}`,
+              column2: `速度：${Math.round(ele.speed)}`,
+              column3: `敏捷：${ele.agi}`,
+            },
+            {
+              column1: `躲避质度：${ele.dodge_zz}`,
+              column2: `躲避：${Math.round(ele.dodge)}`,
+              column3: `潜力：${ele.potential_num}`,
+            },
+          ];
+          let skills = [];
+          skill.forEach((item) => {
+            skills.push({
+              name: item.name,
+              info: item.info,
+              style: item.high ? "margin:5px;color:orchid" : "margin:5px;",
+            });
+          });
+          const point = ele.potential_num;
+          const obj = { _id, skills, name, data, status, point };
+          pets.push(obj);
+        });
+      return pets;
+    },
+    petList() {
+      const options = [];
+      this.petsInfo.forEach((ele) => {
+        let skills = [];
+        ele.skills.forEach((item) => {
+          skills.push(item.name);
+        });
+        options.push({
+          value: ele._id,
+          label: `${ele.name} ， ${ele.data[0].column3}`,
+          skills,
+          status: ele.status,
+        });
+      });
+      return options;
+    },
+    selectPet1() {
+      const pet = this.petList.find((ele) => this.pet1 === ele.value) || {
+        skills: [],
+      };
+      return pet.skills.join("，") || "无";
+    },
+    selectPet2() {
+      const pet = this.petList.find((ele) => this.pet2 === ele.value) || {
+        skills: [],
+      };
+      return pet.skills.join(",") || "无";
+    },
+    bookList() {
+      const options = [];
+      this.goods.forEach((ele) => {
+        ele.goodsType === "兽决" &&
+          options.push({
+            value: ele.id,
+            label: ele.name,
+          });
+      });
+      return options;
     },
   },
   mounted() {
@@ -948,7 +1392,6 @@ export default {
       this.readToUse = null;
       this.searchText = "";
       this.selectedGoods = [];
-
       //更新背包状态为 true 且 opened 为true时 ，重置背包
       if (this.user.updateGoods && this.opened) {
         this.user.updateGoods = false;
@@ -980,6 +1423,8 @@ export default {
       this.user.goods = [];
       this.user.goodsPage = 1;
       this.game.getMyGoods();
+      //重置宠物信息
+      name.includes("蛋") && this.game.getMyPet();
       this.readToUse = null;
       this.$Spin.hide();
     },
@@ -1010,13 +1455,109 @@ export default {
     },
     //合成物品
     makeGoods() {
-      this.game.makeGoods(this.selectedGoods)
+      this.game.makeGoods(this.selectedGoods);
       this.selectedGoods = [];
     },
+    //物品操作
     goodsHandle(val) {
       this.readToUse = val;
       this.readToUse.useNum = 1;
     },
+    //用于生成装备展示信息
+    getEqsInfo(obj) {
+      const eq_data = {
+        佩戴等级: obj.wear_level,
+        物理伤害: obj.physical_damage,
+        物理防御: obj.physical_defense,
+        魔法伤害: obj.magic_damage,
+        魔法防御: obj.magic_defense,
+        治疗能力: obj.restore_damage,
+        气血: obj.a,
+        速度: obj.speed,
+        体质: obj.con,
+        魔力: obj.int,
+        力量: obj.str,
+        耐力: obj.vit,
+        敏捷: obj.agi,
+        物理暴击: obj.physical_crit,
+        法术暴击: obj.magic_crit,
+        特技: obj.skill ? `${obj.skill.name}--${obj.skill.info}` : "",
+        评分: Math.round(obj.score),
+      };
+      let eq_info = {};
+      for (const key in eq_data) {
+        if (eq_data.hasOwnProperty(key)) {
+          const element = eq_data[key];
+          if (element) {
+            eq_info[key] = element;
+          }
+        }
+      }
+      return eq_info;
+    },
+    //宠物相关操作
+    handlePet(obj, type, point) {
+      const arr = ["升级", "加点", "放生", "幻化", "参战/休息", "合成", "打书"];
+      const points = {
+        str: point === 1 ? obj.point : 0, // 力量
+        int: point === 2 ? obj.point : 0, // 智力
+        agi: 0, // 敏捷
+        vit: 0, // 耐力
+        con: 0, // 体质
+      };
+
+      this.modal = true;
+      this.handleData = {
+        type: type,
+        data: obj,
+        point: type === 2 ? points : null,
+        name: arr[type - 1],
+      };
+    },
+    confirmHandle() {
+      const data = this.handleData;
+
+      //升级，放生，加点
+      if (data.type < 4) {
+        this.game.upUserPetLevel(data.data._id, data.type, data.point);
+      }
+      //幻化
+      if (data.type === 4) {
+        this.game.turnIntoPet(data.data._id);
+        this.tabPaneName = "name1";
+      }
+      //参战 or 休息
+      if (data.type === 5) {
+        const status = data.data.status ? 0 : 1;
+        this.game.playUserPet(data.data._id, status);
+        this.tabPaneName = "name1";
+      }
+      //合宠
+      if (data.type === 6) {
+        this.game.fitPet(this.pet1, this.pet2);
+        this.tabPaneName = `name${this.petsInfo.length - 1}`;
+        this.pet1 = "";
+        this.pet2 = "";
+
+      }
+      if (data.type === 7) {
+        this.game.addUserPetSkill(this.pet2, this.pet1);
+        this.pet1 = "";
+        this.pet2 = "";
+
+      }
+
+      if (data.type !== 1) {
+        this.modal = false;
+      }
+    },
+    //抓宝宝
+    catchPets(val) {
+      this.$set(this.user, 'skilltype', '1001');
+      this.$set(this.user, 'skillid', '');
+      this.$set(this.user, 'skillname', '捕捉');
+      this.$set(this.user, 'target', this.target);
+    }
   },
 };
 </script>
@@ -1119,6 +1660,44 @@ export default {
   flex-direction: column;
   .ivu-btn {
     margin-top: 2px !important;
+  }
+}
+.eq-img {
+  width: 20px;
+  vertical-align: middle;
+  margin-right: 10px;
+}
+
+.ivu-tabs-bar {
+  margin-bottom: 0 !important;
+  .ivu-tabs-tab {
+    padding: 8px 5px !important;
+  }
+}
+
+.ivu-table-tbody {
+  font-size: 12px;
+
+  .ivu-table-column-center {
+    height: 36px;
+    .ivu-table-cell {
+      padding: 0;
+    }
+  }
+}
+.pet-btn {
+  padding-top: 5px;
+  display: flex !important;
+  justify-content: center;
+  .ivu-btn {
+    padding: 0 6px !important;
+  }
+}
+
+.slelect-box {
+  padding: 10px;
+  p {
+    padding: 10px;
   }
 }
 </style>
