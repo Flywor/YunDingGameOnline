@@ -272,7 +272,8 @@ GameApi.regHookHandlers = {
     "connector.userHandler.xyUpdate": [ // //  仙蕴提交
         CoreHooks.onSaveData
     ],
-    "gate.gateHandler.queryEntry": [] // *登录游戏
+    "gate.gateHandler.queryEntry": [], // *登录游戏
+    "connector.userHandler.getNewPet": [] // 预览合宠
 };
 
 /**
@@ -1355,10 +1356,10 @@ GameApi.prototype.resetAttribute = function () {
 /**
 * 预览合宠
 */
-GameApi.prototype.getMyPet = function (a_id, b_id) {
+GameApi.prototype.getNewPet = function (a_id, b_id) {
     this.sendMessage({
         ids: a_id + "," + b_id
-    }, "connector.userHandler.getMyPet");
+    }, "connector.userHandler.getNewPet");
 }
 
 /**
@@ -1373,7 +1374,7 @@ GameApi.prototype.fitPet = function (a_id, b_id) {
 /**
 * 添加用户宠物技能?
 */
-GameApi.prototype.addUserPetSkill = function (upid) {
+GameApi.prototype.addUserPetSkill = function (ugid,upid) {
     this.sendMessage({
         ugid, upid
     }, "connector.userHandler.addUserPetSkill");
