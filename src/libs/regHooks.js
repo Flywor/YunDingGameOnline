@@ -490,12 +490,12 @@ export default function (_app) {
         if (!app.user.wbtResult) {
             app.user.wbtResult = []
         }
+        app.user.wbtResult.push(data.msg);
         if (data.code != 200) {
             app.$Message.error(data.msg);
             return;
         }
         app.$Message.success(data.msg);
-        app.user.wbtResult.push(data.msg);
         if (!window.freshPackage) return;
         // 重置背包
         app.user.goods = [];

@@ -1568,13 +1568,15 @@ export default {
         this.$set(this.user, 'fighting', false);
         return;
       }
-      this.$Message.warning('现在开始别乱点，等到全挖完会弹出结果');
+      this.$Message.warning('开始全部挖藏宝图，别乱点');
       window.freshPackage = false;
       for (let i = 0; i < this.waBao.length; i++) {
         const cbt = this.waBao[i];
+        this.$Message.success(`正在挖第${i+1}/${this.waBao.length}个藏宝图`);
         await this.moveToMap(cbt.mapid);
-        this.game.wbt(cbt.btId);
         await sleep(5000);
+        this.$Message.success(`正在挥动洛阳铲`);
+        this.game.wbt(cbt.btId);
       }
       this.$Modal.info({
         render: () => (
@@ -1602,8 +1604,9 @@ export default {
       const path = findMapPath(this.user.map.id, toid);
       for(let i = 0; i < path.length; i++) {
         const map = path[i];
-        this.game.moveToNewMap(map.id);
         await sleep(5000);
+        this.$Message.success(`正在切图去${map.name}`);
+        this.game.moveToNewMap(map.id);
       }
     }
   }
