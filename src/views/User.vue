@@ -172,9 +172,9 @@
     </template>
     <template v-if="waBao.length > 0">
       <div class="br" />
-      检测到你在
-      <span style="color: green">{{waBao.map(wb => wb.name).join('，')}}</span>
-      有藏宝图
+      检测到你有
+      <span style="color: red">{{waBao.length}}</span>
+      张藏宝图
       &nbsp;
       <Button
         @click="handleAutoWaBao"
