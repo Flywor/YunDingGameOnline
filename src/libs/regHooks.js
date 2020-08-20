@@ -62,10 +62,13 @@ export default function (_app) {
 
     // 移动地图的返回
     let moveToNewMapCb = function (data) {
-        let user = app.user;
+        if (data.code != 200) {
+            app.$Message.error(data.msg);
+            return;
+        }
 
         // 更新地图位置
-        app.$set(user, 'map', data.map);
+        app.$set(app.user, 'map', data.map);
     };
     moveToNewMapCb.hookMark = "regHooks.moveToNewMapCb";
     GameApi.regHookHandlers['connector.playerHandler.moveToNewMap'].push(moveToNewMapCb);
@@ -484,12 +487,16 @@ export default function (_app) {
 
     // 挖宝图回调
     let wbtCb = function (data) {
+        if (!app.user.wbtResult) {
+            app.user.wbtResult = []
+        }
         if (data.code != 200) {
             app.$Message.error(data.msg);
             return;
         }
         app.$Message.success(data.msg);
-
+        app.user.wbtResult.push(data.msg);
+        if (!window.freshPackage) return;
         // 重置背包
         app.user.goods = [];
         app.user.goodsPage = 1;

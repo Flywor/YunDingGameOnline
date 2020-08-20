@@ -128,6 +128,14 @@
           [<a @click="() => {
             game.useGoods(unusecbt.normal.id)
           }">鉴定一张</a>]
+          [<a @click="() => {
+            readToUse = {
+              useNum: unusecbt.normal.num,
+              id: unusecbt.normal.id,
+              name: '藏宝图'
+            };
+            handleUseItem()
+          }">全部鉴定</a>]
           <template v-if="unusecbt.normal.num >= 12">
             <div class="br" />
             <a
@@ -152,8 +160,13 @@
           张没鉴定的
           <span style="color: red">高级藏宝图</span>
           [<a @click="() => {
-            game.useGoods(unusecbt.high.id)
-          }">鉴定一张</a>]
+            readToUse = {
+              useNum: unusecbt.high.num,
+              id: unusecbt.high.id,
+              name: '高级藏宝图'
+            };
+            handleUseItem();
+          }">全部鉴定</a>]
         </template>
       </template>
     </template>
@@ -163,18 +176,13 @@
       <span style="color: green">{{waBao.map(wb => wb.name).join('，')}}</span>
       有藏宝图
       &nbsp;
-      <template v-if="currentWaBao">
-        ，巧了，刚好有一张{{currentWaBao.name}}
-        <Button
-          @click="() => {
-          game.wbt(currentWaBao.btId)
-        }"
-          size="small"
-          type="info"
-        >
-          挖宝
-        </Button>
-      </template>
+      <Button
+        @click="handleAutoWaBao"
+        size="small"
+        type="info"
+      >
+        自动挖宝
+      </Button>
     </template>
     <!-- 挖宝 ↑ -->
     <!-- 地图 ↓ -->
@@ -410,7 +418,6 @@
         />
       </div>
       <div class="goods-box">
-
         <Badge
           :count="item.selected"
           overflow-count="999"
@@ -633,7 +640,6 @@
           v-for="(item, index) in petsInfo"
           :key="item.id"
         >
-
           <Divider size="small">状态：{{item.status?'已参战':'休息中'}}</Divider>
           <p
             style="padding:5px"
@@ -716,10 +722,8 @@
               @click="handlePet(item, 7)"
             >打书</Button>
           </ButtonGroup>
-
         </TabPane>
       </Tabs>
-
     </Modal>
     <!-- 宠物信息↑ -->
     <!-- 防误操作modal -->
@@ -831,7 +835,7 @@ let messageTime;
 import GameApi from "@libs/YunDingOnlineSDK.js";
 import regHooks from "@libs/regHooks.js";
 import configData from "@/config.js";
-import { sleep } from "@libs/tools";
+import { sleep, findMapPath } from "@libs/tools";
 export default {
   name: "User",
   data() {
@@ -947,11 +951,10 @@ export default {
           id: gds.map,
           btId: gds.id,
           name: maps.find((mp) => mp.id === gds.map).name,
-        }));
+          mapid: gds.map
+        }))
+        .sort((a, b) => a.mapid - b.mapid);
       return btMaps;
-    },
-    currentWaBao() {
-      return this.waBao.find((wb) => wb.id === this.user.map.id);
     },
     unusecbt() {
       const goods = this.user.goods;
@@ -960,7 +963,7 @@ export default {
       if (unuse.length === 0) return null;
       const unusecbt = {
         normal: unuse.find((usc) => !usc.highcbt),
-        high: unuse.find((usc) => usc.highcbt),
+        high: unuse.find((usc) => usc.highcbt)
       };
       return unusecbt;
     },
@@ -1557,8 +1560,53 @@ export default {
       this.$set(this.user, 'skillid', '');
       this.$set(this.user, 'skillname', '捕捉');
       this.$set(this.user, 'target', this.target);
+    },
+    async handleAutoWaBao () {
+      if (this.user.team || this.user.fighting || this.user.message) {
+        this.game.leaveTeam();
+        this.$Message.warning('想办法把战斗停下来，然后重新加载至没有战斗信息为止，否则会触发刷新重连');
+        this.$set(this.user, 'fighting', false);
+        return;
+      }
+      this.$Message.warning('现在开始别乱点，等到全挖完会弹出结果');
+      window.freshPackage = false;
+      for (let i = 0; i < this.waBao.length; i++) {
+        const cbt = this.waBao[i];
+        await this.moveToMap(cbt.mapid);
+        this.game.wbt(cbt.btId);
+        await sleep(5000);
+      }
+      this.$Modal.info({
+        render: () => (
+          <div>
+            {this.user.wbtResult.map(msg => (
+              <div>
+                {msg}
+              </div>
+            ))}
+          </div>
+        )
+      });
+      window.freshPackage = true;
+      this.game.userInfo();
+      // 重置背包
+      this.user.goods = [];
+      this.user.goodsPage = 1;
+      this.game.getMyGoods();
+      this.readToUse = null;
+    },
+    async moveToMap (toid) {
+      if (this.user.map.id === toid) {
+        return
+      }
+      const path = findMapPath(this.user.map.id, toid);
+      for(let i = 0; i < path.length; i++) {
+        const map = path[i];
+        this.game.moveToNewMap(map.id);
+        await sleep(5000);
+      }
     }
-  },
+  }
 };
 </script>
 <style lang="less" scoped>
