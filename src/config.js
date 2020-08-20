@@ -121,8 +121,8 @@ export default {
         id: 16,
         name: "聚仙驿站",
         is_city: true,
-        up: [10],
-        next: [14, 17, 18, 19]
+        up: [14],
+        next: [17, 19]
     }, {
         id: 17,
         name: "黑海森狱",
