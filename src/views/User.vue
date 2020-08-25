@@ -35,12 +35,12 @@
       <div class="br" />
       <p>
         LV.{{user.myInfo.level}}&nbsp;
+        [{{ Math.floor(user.myInfo.exp) }}/{{ Math.floor(user.myInfo.nextExp) }}]
+        &nbsp;
         <a
           v-if="user.myInfo.exp > user.myInfo.nextExp"
           @click="game.upPlayerLevel()"
         >升级</a>
-        &nbsp;
-        EXP：{{ Math.floor(user.myInfo.exp) }}/{{ Math.floor(user.myInfo.nextExp) }}
         &nbsp;
         <Poptip
           v-if="user.myInfo.potential_num > 0"
@@ -68,33 +68,6 @@
             </a>
           </div>
         </Poptip>
-        &nbsp;
-        <Poptip
-          v-if="user.myInfo.game_silver > 1000000"
-          transfer
-          placement="bottom"
-        >
-          <Button
-            size="small"
-            type="info"
-          >
-            点技能
-          </Button>
-          <div slot="content">
-            <a
-              @click="handleFationSkill(1)"
-              size="small"
-            >
-              剑修五十级
-            </a>
-            <a
-              @click="handleFationSkill(2)"
-              size="small"
-            >
-              枪修五十级
-            </a>
-          </div>
-        </Poptip>
       </p>
       <div class="br" />
       <p>
@@ -109,12 +82,42 @@
         >
           储物戒指
         </Button>
-
       </p>
       <div class="br" />
       <p>
         气血储备：{{ Math.floor(user.myInfo.hp_store) }}&nbsp;魔法储备：{{ Math.floor(user.myInfo.mp_store) }}
       </p>
+    </template>
+    <!-- 修炼 -->
+    <template v-if="user.arms">
+      <div class="br" />
+      <div>
+        <Tag v-for="arm in user.arms" :key="arm.name">
+          {{arm.name}}[{{arm.exp}}/{{arm.needExp}}]
+        </Tag>
+        &nbsp;
+        <Poptip
+          v-if="user.myInfo.game_silver > 1000000"
+          transfer
+          placement="bottom"
+        >
+          <Button
+            size="small"
+            type="info"
+          >
+            点技能
+          </Button>
+          <div slot="content">
+            <Input v-model="upSkillNum" type="number" style="width: 180px">
+              <Select transfer v-model="upSkillType" slot="prepend" style="width: 60px;">
+                <Option :value="1">剑修</Option>
+                <Option :value="2">枪修</Option>
+              </Select>
+              <Button slot="append" type="primary" size="small" @click="handleFationSkill">确定</Button>
+            </Input>
+          </div>
+        </Poptip>
+      </div>
     </template>
     <!-- 挖宝 ↓ -->
     <template>
@@ -856,6 +859,8 @@ export default {
         roundCount: 0, //回合数
         fightCount: 0, //战斗场数
       },
+      upSkillNum: 50,
+      upSkillType: 1,
       readToUse: null,
       searchText: "",
       selectedGoods: [],
@@ -901,6 +906,7 @@ export default {
         }
         user.combatName = combatName;
         this.saveStorageUserInfo(user);
+        console.log(user)
       },
     },
   },
@@ -1354,20 +1360,28 @@ export default {
       }
     },
     async handleFationSkill(type) {
-      this.$Message.info("正在自动连点技能，完成后会提示");
-      for (let i = 0; i < 50; i++) {
-        // 剑修
-        if (type === 1) {
-          this.game.repairUserArms(1);
-        }
-        // 枪修
-        if (type === 2) {
-          this.game.repairUserArms(2);
-        }
+      if (this.upSkillNum <= 0) {
+        this.$Message.error('大胸弟，别搞事情');
+        return;
+      }
+      if (this.upSkillNum * 20000 > this.user.myInfo.game_silver) {
+        this.$Message.error('大胸弟，你钱不够啊');
+        return;
+      }
+      this.$Spin.show({
+        render: () => (
+          <p>
+            正在自动连点技能，为避免请求次数过多和程序错乱，在此窗口关闭后再进行其他操作
+          </p>
+        ),
+      });
+      for (let i = 0; i < this.upSkillNum; i++) {
+        this.game.repairUserArms(this.upSkillType);
         await sleep(100);
       }
       this.game.userInfo();
-      this.$Message.info("技能修炼完成");
+      this.game.getMySkill();
+      this.$Spin.hide();
     },
     getDateTime() {
       let date = new Date();

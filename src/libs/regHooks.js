@@ -429,7 +429,29 @@ export default function (_app) {
             app.$Message.error(data.msg);
             return;
         }
-        app.$set(app.user, 'skills', data.data.skill)
+        app.$set(app.user, 'skills', data.data.skill);
+
+        const arms = [];
+        const typeMap = {
+            0: '剑', 1: '枪', 2: '锤', 3: '伞'
+        };
+        const levelMap = {
+            0: { name: '入门', exp: 200 },
+            1: { name: '精修', exp: 500 },
+            2: { name: '意境', exp: 1500 },
+            3: { name: '心境', exp: 3500 },
+            4: { name: '解境', exp: 5000 },
+            5: { name: '魂入体', exp: 30000 },
+            6: { name: '灵出窍', exp: 100000 },
+            7: { name: '神境', exp: 500000 }
+        };
+        data.data.arms_exp.map((exp, index) => {
+            if (index >= 2) return
+            const typeName = typeMap[index];
+            const level = levelMap[data.data.arms_level[index]];
+            arms.push({ exp, needExp: level.exp, name: `${typeName}${level.name}` });
+        });
+        app.$set(app.user, 'arms', arms);
     }
     getMySkillCb.hookMark = "regHooks.getMySkillCb";
     GameApi.regHookHandlers['connector.userHandler.getMySkill'].push(getMySkillCb);
