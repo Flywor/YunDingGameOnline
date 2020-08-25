@@ -25,17 +25,48 @@
     <div class="card-container">
       <Card :title="user.email" class="card" v-for="(user, index) in userList" :key="user.email">
         <div slot="extra">
-          <a @click="handleReload(index)">重新加载</a>
+          <a v-if="user.isLogin" @click="handleReload(index)">重新加载</a>
+          &nbsp;
+          <a v-if="user.isLogin" @click="user.isLogin = false">登出</a>
+          &nbsp;
+          <a v-if="!user.isLogin" @click="user.isLogin = true">登入</a>
           &nbsp;
           <a @click="deleteUser(user.email)">删除</a>
         </div>
-        <iframe ref="userFrame" :src="`${baseUrl}#/user/${user.email}`" />
+        <iframe v-if="user.isLogin" ref="userFrame" :src="`${baseUrl}#/user/${user.email}`" />
       </Card>
     </div>
+    <Drawer
+      v-if="userList[0]"
+      :title="`消息箱 -- ${userList[0].email}`"
+      :closable="false"
+      :value="true"
+      width="300px"
+      :mask="false"
+    >
+      <div class="chat">
+        <div class="chat-msg">
+          <p v-for="(msg, i) in msgList" :key="i">
+            <Tag
+              :style="{ float: msg.nickname == userList[0].email ? 'right': 'left' }"
+              :color="msg.nickname == userList[0].email ? 'primary': 'success'"
+              size="large"
+            >
+              {{msg.nickname}}：{{msg.msg}}
+            </Tag>
+          </p>
+        </div>
+        <Divider />
+        <div class="chat-send">
+          <Input search enter-button="发送" placeholder="想唠点啥？？？？" @on-search="handleSendChat" v-model="sendMsg"/>
+        </div>
+      </div>
+    </Drawer>
   </div>
 </template>
 
 <script>
+import { sleep } from "@libs/tools";
 export default {
   name: 'Home',
   data () {
@@ -45,7 +76,27 @@ export default {
         user: '',
         password: ''
       },
-      userList: []
+      userList: [],
+      showChat: false,
+      msgList: [],
+      sendMsg: ''
+    }
+  },
+  watch: {
+    userList: {
+      deep: true,
+      async handler (userList) {
+        if (!userList || userList.length === 0) {
+          this.showChat = false
+          this.msgList = []
+          this.sendMsg = ''
+          return
+        }
+        const first = userList[0]
+        await sleep(() => this.$refs['userFrame'])
+        await sleep(() => this.$refs['userFrame'][0].contentWindow.chatMsg)
+        this.msgList = this.$refs['userFrame'][0].contentWindow.chatMsg
+      }
     }
   },
   mounted () {
@@ -53,11 +104,15 @@ export default {
     const users = this.getStorageUser();
     const userList = []
     Object.keys(users).forEach((email) => {
-      userList.push({ email, password: users[email] });
+      userList.push({ email, isLogin: true, password: users[email] });
     });
     this.userList = userList
   },
   methods: {
+    handleSendChat () {
+      this.$refs['userFrame'][0].contentWindow.game.chatSend(this.sendMsg)
+      this.sendMsg = ''
+    },
     async handleLogin () {
       const rs = await this.$refs['formInline'].validate()
       if (rs) {
@@ -120,10 +175,11 @@ export default {
 .home {
   padding: 16px;
   .card-container {
+    width: calc(100% - 280px);
     .card {
       display: inline-block;
-      width: calc(20% - 8px);
-      height: 450px;
+      width: calc(33% - 8px);
+      height: 430px;
       margin: 0 8px 8px 0;
       vertical-align: top;;
     }
@@ -132,6 +188,26 @@ export default {
     width: 100%;
     height: 100%;
     border: 0;
+  }
+}
+.chat {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  .chat-msg {
+    flex: 1;
+    padding: 16px 16px 0 16px;
+    overflow: auto;
+    p {
+      height: 32px;
+    }
+  }
+  .chat-send {
+    margin: 0 24px 24px 24px;
   }
 }
 </style>

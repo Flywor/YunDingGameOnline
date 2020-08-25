@@ -889,6 +889,7 @@ export default {
       pet1: "",
       pet2: "",
       target: "粉红海兔",
+      msgList: []
     };
   },
   watch: {
@@ -906,7 +907,6 @@ export default {
         }
         user.combatName = combatName;
         this.saveStorageUserInfo(user);
-        console.log(user)
       },
     },
   },
@@ -1281,6 +1281,8 @@ export default {
 
       // 游戏对象保存起来
       this.game = game;
+      // 暴露到全局
+      window.game = game;
 
       // 添加到用户列表
       this.user = user;

@@ -1,6 +1,7 @@
 import GameApi from './YunDingOnlineSDK'
 
 window.freshPackage = true
+window.chatMsg = []
 
 // 暴露一个接口 用来接收 app 对象
 export default function (_app) {
@@ -258,6 +259,23 @@ export default function (_app) {
     }
     roundOperatingCb.hookMark = "regHooks.roundOperatingCb";
     GameApi.regHookHandlers['connector.teamHandler.roundOperating'].push(roundOperatingCb);
+
+    // 发送消息
+    let chatSendCb = function (data) {
+        if (data.code != 200) {
+            app.$Message.error(data.msg);
+            return;
+        }
+    }
+    chatSendCb.hookMark = "regHooks.chatSendCb";
+    GameApi.regHookHandlers['chat.chatHandler.send'].push(chatSendCb);
+
+    // 接收消息
+    let onChatMsgCb = function (data) {
+        window.chatMsg.push(data)
+    }
+    onChatMsgCb.hookMark = "regHooks.onChatMsgCb";
+    GameApi.regHookHandlers['onChatMsg'].push(onChatMsgCb);
 
     // 获取我的背包物品
     let getMyGoodsCb = function (data) {

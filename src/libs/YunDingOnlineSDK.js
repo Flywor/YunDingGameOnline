@@ -791,6 +791,16 @@ GameApi.prototype.loginToken = function () {
 }
 
 /**
+* 发送消息
+*/
+GameApi.prototype.chatSend = function (send_msg) {
+    this.sendMessage({
+        send_channel: 3,
+        send_msg
+    }, "chat.chatHandler.send")
+}
+
+/**
 * 仙蕴提交
 */
 GameApi.prototype.xyUpdate = function () {
