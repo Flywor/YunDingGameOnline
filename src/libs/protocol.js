@@ -82,7 +82,16 @@ define(function (exports, require, module) {
                 }
                 array.push(charCode);
             }
-            return String.fromCharCode.apply(null, array);
+            var res = '';
+            var chunk = 8 * 1024;
+            var i;
+            for (i = 0; i < array.length / chunk; i++) {
+            res += String.fromCharCode.apply(null, array.slice(i * chunk, (i + 1) * chunk));
+            }
+            res += String.fromCharCode.apply(null, array.slice(i * chunk));
+            return res;
+
+            // return String.fromCharCode.apply(null, array);
         }
             ;
 
