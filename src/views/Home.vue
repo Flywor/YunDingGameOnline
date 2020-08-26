@@ -49,7 +49,7 @@
       :color="msg.color"
       size="large"
     >
-      {{msg.nickname}}：<label v-html="msg.msg" />
+      {{msg.nickname || '系统'}}：<label v-html="msg.msg" />
     </Tag>
     <div class="chart">
       <Input search enter-button="发送" placeholder="想唠点啥？？？？" @on-search="handleSendChat" v-model="sendMsg"/>
@@ -186,7 +186,6 @@ export default {
   padding: 16px;
   position: relative;
   overflow-x: hidden;
-  overflow-y: auto;
   .dm {
     word-break: keep-all;
     position: absolute;
