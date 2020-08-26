@@ -109,14 +109,14 @@ export default {
       this.msgList = this.$refs['userFrame'][0].contentWindow.chatMsg
     },
     getDmColor (msg) {
-      if (msg.channel == 0) {
-        return 'volcano'
-      }
       // 回收弹幕
       setTimeout(() => {
         const dmindex = this.msgDm.findIndex(m => m.key == msg.key)
         this.msgDm.splice(dmindex, 1)
       }, 20000)
+      if (msg.channel == 0) {
+        return 'volcano'
+      }
       return msg.nickname == this.userList[0].email ? 'primary': 'success'
     },
     handleSendChat () {
