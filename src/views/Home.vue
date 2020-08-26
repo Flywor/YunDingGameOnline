@@ -33,44 +33,37 @@
           &nbsp;
           <a @click="deleteUser(user.email)">删除</a>
         </div>
-        <iframe v-if="user.isLogin" ref="userFrame" :src="`${baseUrl}#/user/${user.email}`" />
+        <iframe
+          v-if="user.isLogin"
+          ref="userFrame"
+          :src="`${baseUrl}#/user/${user.email}`"
+          @load="e => frameLoad(index)"
+        />
       </Card>
     </div>
-    <Drawer
-      v-if="userList[0]"
-      :title="`消息箱 -- ${userList[0].email}`"
-      :closable="false"
-      :value="true"
-      width="300px"
-      :mask="false"
+    <Tag
+      v-for="msg in msgDm"
+      :key="msg.key"
+      class="dm"
+      :style="{ top: `${msg.top * 32}px` }"
+      :color="msg.color"
+      size="large"
     >
-      <div class="chat">
-        <div class="chat-msg">
-          <p v-for="(msg, i) in msgList" :key="i">
-            <Tag
-              :style="{ float: msg.nickname == userList[0].email ? 'right': 'left' }"
-              :color="msg.nickname == userList[0].email ? 'primary': 'success'"
-              size="large"
-            >
-              {{msg.nickname}}：{{msg.msg}}
-            </Tag>
-          </p>
-        </div>
-        <Divider />
-        <div class="chat-send">
-          <Input search enter-button="发送" placeholder="想唠点啥？？？？" @on-search="handleSendChat" v-model="sendMsg"/>
-        </div>
-      </div>
-    </Drawer>
+      {{msg.nickname}}：<label v-html="msg.msg" />
+    </Tag>
+    <div class="chart">
+      <Input search enter-button="发送" placeholder="想唠点啥？？？？" @on-search="handleSendChat" v-model="sendMsg"/>
+    </div>
   </div>
 </template>
 
 <script>
-import { sleep } from "@libs/tools";
+import { sleep, randomNum } from "@libs/tools";
 export default {
   name: 'Home',
   data () {
     return {
+      randomNum,
       baseUrl: `${location.origin}${location.pathname}`,
       formInline: {
         user: '',
@@ -79,23 +72,20 @@ export default {
       userList: [],
       showChat: false,
       msgList: [],
-      sendMsg: ''
+      msgDm: [],
+      sendMsg: '',
+      dmline: 0
     }
   },
   watch: {
-    userList: {
+    'msgList.length': {
       deep: true,
-      async handler (userList) {
-        if (!userList || userList.length === 0) {
-          this.showChat = false
-          this.msgList = []
-          this.sendMsg = ''
-          return
-        }
-        const first = userList[0]
-        await sleep(() => this.$refs['userFrame'])
-        await sleep(() => this.$refs['userFrame'][0].contentWindow.chatMsg)
-        this.msgList = this.$refs['userFrame'][0].contentWindow.chatMsg
+      handler (length) {
+        if (length === 0) return
+        const dm = this.msgList[length - 1]
+        dm.top = this.randomNum(0, this.dmline)
+        dm.color = this.getDmColor(dm)
+        this.msgDm.push(dm)
       }
     }
   },
@@ -107,8 +97,28 @@ export default {
       userList.push({ email, isLogin: true, password: users[email] });
     });
     this.userList = userList
+
+    this.dmline = Math.floor(window.document.body.offsetHeight / 36) - 1
+    window.addEventListener('resize', () => {
+      this.dmline = Math.floor(window.document.body.offsetHeight / 36) - 1
+    })
   },
   methods: {
+    frameLoad (index) {
+      if (index != 0) return;
+      this.msgList = this.$refs['userFrame'][0].contentWindow.chatMsg
+    },
+    getDmColor (msg) {
+      if (msg.channel == 0) {
+        return 'volcano'
+      }
+      // 回收弹幕
+      setTimeout(() => {
+        const dmindex = this.msgList.findIndex(m => m.key == msg.key)
+        this.msgList.splice(dmindex, 1)
+      }, 20000)
+      return msg.nickname == this.userList[0].email ? 'primary': 'success'
+    },
     handleSendChat () {
       this.$refs['userFrame'][0].contentWindow.game.chatSend(this.sendMsg)
       this.sendMsg = ''
@@ -174,11 +184,26 @@ export default {
 <style lang="less" scoped>
 .home {
   padding: 16px;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+  .dm {
+    word-break: keep-all;
+    position: absolute;
+    z-index: 9999;
+    animation: dmframe 20s linear;
+    top: 0;
+    left: 100%;
+    @keyframes dmframe {
+      0% { left: 100%; }
+      100% { left: -100%; }
+    }
+  }
   .card-container {
-    width: calc(100% - 280px);
+    width: 100%;
     .card {
       display: inline-block;
-      width: calc(33% - 8px);
+      width: calc(20% - 8px);
       height: 430px;
       margin: 0 8px 8px 0;
       vertical-align: top;;
@@ -189,25 +214,11 @@ export default {
     height: 100%;
     border: 0;
   }
-}
-.chat {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  .chat-msg {
-    flex: 1;
-    padding: 16px 16px 0 16px;
-    overflow: auto;
-    p {
-      height: 32px;
-    }
-  }
-  .chat-send {
-    margin: 0 24px 24px 24px;
+  .chart {
+    position: fixed;
+    bottom: 8px;
+    right: 8px;
+    width: 50%;
   }
 }
 </style>

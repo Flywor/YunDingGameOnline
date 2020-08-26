@@ -42,6 +42,16 @@ export const findMapPath = function (nowid, toid) {
   circleCalcle(nowid)
   const nicePath = topath.sort((n, m) => n.length - m.length)[0]
   nicePath.splice(0, 1)
-console.log(nicePath)
   return nicePath.map(id => maps.find(m => m.id === id))
+}
+
+export const randomNum = function (minNum , maxNum = Infinity, exclude = []) {
+  let result = parseInt(Math.random() * (maxNum - minNum + 1) + minNum, 10)
+  if (exclude.length >= (maxNum - minNum)) {
+    return null
+  }
+  if (exclude.includes(result)) {
+    result = randomNum(minNum, maxNum, exclude)
+  }
+  return result
 }

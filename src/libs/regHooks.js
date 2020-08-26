@@ -272,7 +272,8 @@ export default function (_app) {
 
     // 接收消息
     let onChatMsgCb = function (data) {
-        window.chatMsg.push(data)
+        data.key = Date.now();
+        window.chatMsg.push(data);
     }
     onChatMsgCb.hookMark = "regHooks.onChatMsgCb";
     GameApi.regHookHandlers['onChatMsg'].push(onChatMsgCb);
