@@ -186,6 +186,7 @@ export default {
   padding: 16px;
   position: relative;
   overflow-x: hidden;
+  height: 100%;
   .dm {
     word-break: keep-all;
     position: absolute;
