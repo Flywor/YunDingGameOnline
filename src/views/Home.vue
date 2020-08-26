@@ -114,8 +114,8 @@ export default {
       }
       // 回收弹幕
       setTimeout(() => {
-        const dmindex = this.msgList.findIndex(m => m.key == msg.key)
-        this.msgList.splice(dmindex, 1)
+        const dmindex = this.msgDm.findIndex(m => m.key == msg.key)
+        this.msgDm.splice(dmindex, 1)
       }, 20000)
       return msg.nickname == this.userList[0].email ? 'primary': 'success'
     },
