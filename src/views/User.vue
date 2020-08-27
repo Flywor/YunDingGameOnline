@@ -97,7 +97,6 @@
         </Tag>
         &nbsp;
         <Poptip
-          v-if="user.myInfo.game_silver > 1000000"
           transfer
           placement="bottom"
         >
@@ -433,7 +432,7 @@
             :style="item.style"
             @click="goodsHandle(item)"
           >
-            {{item.name}}({{item.num}})
+            <label v-html="item.name"></label>({{item.num}})
           </Button>
         </Badge>
 
@@ -1286,6 +1285,8 @@ export default {
 
       // 添加到用户列表
       this.user = user;
+      // 暴露到全局
+      window.user = user;
 
       // 登录账号
       game.login(email, password);

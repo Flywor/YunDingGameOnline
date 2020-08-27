@@ -3,65 +3,85 @@
     <Form
       ref="formInline"
       :model="formInline"
-      :rules="{
-        user: [ { required: true, message: '请输入账号' } ],
-        password: [
-          { required: true, message: '请输入密码' },
-          { type: 'string', min: 6, message: '密码至少6位' }
-        ]
-      }"
       inline
     >
-      <FormItem prop="user">
+      <FormItem prop="user" class="formitem">
         <Input type="text" v-model="formInline.user" placeholder="账号" />
       </FormItem>
-      <FormItem prop="password">
+      <FormItem prop="password" class="formitem">
         <Input type="password" v-model="formInline.password" placeholder="密码"/>
       </FormItem>
+      <FormItem class="formitem">
+        <Button type="primary" size="small" @click="handleLogin">添加账号</Button>
+      </FormItem>
       <FormItem>
-        <Button type="primary" @click="handleLogin">添加账号</Button>
+        <Input type="password" v-model="SCKEY" @on-change="handleSCKEYChange" placeholder="serverChan SCKEY" />
+      </FormItem>
+      <FormItem>
+        弹幕
+        <i-switch v-model="openDm" @on-change="handleDMflag">
+          <span slot="open">开</span>
+          <span slot="close">关</span>
+        </i-switch>
+      </FormItem>
+      <FormItem>
+        <Input v-if="openDm" search enter-button="发送" placeholder="快来发送弹幕吧" @on-search="handleSendChat" v-model="sendMsg"/>
       </FormItem>
     </Form>
     <div class="card-container">
-      <Card :title="user.email" class="card" v-for="(user, index) in userList" :key="user.email">
-        <div slot="extra">
-          <a v-if="user.isLogin" @click="handleReload(index)">重新加载</a>
-          &nbsp;
-          <a v-if="user.isLogin" @click="user.isLogin = false">登出</a>
-          &nbsp;
-          <a v-if="!user.isLogin" @click="user.isLogin = true">登入</a>
-          &nbsp;
-          <a @click="deleteUser(user.email)">删除</a>
-        </div>
-        <iframe
-          v-if="user.isLogin"
-          ref="userFrame"
-          :src="`${baseUrl}#/user/${user.email}`"
-          @load="e => frameLoad(index)"
-        />
-      </Card>
+      <Row :gutter="8">
+          <Col
+            :xs="24"
+            :md="12"
+            :xl="8"
+            :xxl="4"
+            v-for="(user, index) in userList"
+            :key="user.email"
+          >
+            <Card :title="user.email" class="card">
+              <div slot="extra">
+                <a v-if="user.isLogin" @click="handleReload(index)">重新加载</a>
+                &nbsp;
+                <a v-if="user.isLogin" @click="user.isLogin = false">登出</a>
+                &nbsp;
+                <a v-if="!user.isLogin" @click="user.isLogin = true">登入</a>
+                &nbsp;
+                <a @click="deleteUser(user.email)">删除</a>
+              </div>
+              <iframe
+                v-if="user.isLogin"
+                ref="userFrame"
+                :src="`${baseUrl}#/user/${user.email}`"
+                @load="e => frameLoad(index)"
+              />
+            </Card>
+          </Col>
+      </Row>
     </div>
-    <Tag
-      v-for="msg in msgDm"
-      :key="msg.key"
-      class="dm"
-      :style="{ top: `${msg.top * 32}px` }"
-      :color="msg.color"
-      size="large"
-    >
-      {{msg.nickname || '系统'}}：<label v-html="msg.msg" />
-    </Tag>
-    <div class="chart">
-      <Input search enter-button="发送" placeholder="想唠点啥？？？？" @on-search="handleSendChat" v-model="sendMsg"/>
+    <div v-show="openDm">
+      <Tag
+        v-for="msg in msgDm"
+        :key="msg.key"
+        class="dm"
+        :style="{ top: `${msg.top * 32}px` }"
+        :color="msg.color"
+        size="large"
+      >
+        {{msg.nickname || '系统'}}：<label v-html="msg.msg" />
+      </Tag>
     </div>
+    <iframe :src="serverChanUrl" v-if="serverChanUrl" @onload="serverChanUrl = null" style="display:none;"/>
   </div>
 </template>
 
 <script>
+let lastServerChanSend = 0;
+
 import { sleep, randomNum } from "@libs/tools";
 export default {
   name: 'Home',
   data () {
+    const dmflag = localStorage.getItem('dmflag')
     return {
       randomNum,
       baseUrl: `${location.origin}${location.pathname}`,
@@ -71,10 +91,13 @@ export default {
       },
       userList: [],
       showChat: false,
+      openDm: dmflag ? dmflag === 'true': true,
       msgList: [],
       msgDm: [],
       sendMsg: '',
-      dmline: 0
+      dmline: 0,
+      SCKEY: localStorage.getItem('sckey'),
+      serverChanUrl: null
     }
   },
   watch: {
@@ -102,8 +125,29 @@ export default {
     window.addEventListener('resize', () => {
       this.dmline = Math.floor(window.document.body.offsetHeight / 36) - 1
     })
+
+    // 每隔5分钟检测有没有队伍
+    setInterval(() => {
+      if (!this.SCKEY) return
+      const frames = this.$refs['userFrame']
+      const emptyTeamUser = []
+      frames.map(fms => {
+        const us = fms.contentWindow.user
+        if (!us.team) {
+          emptyTeamUser.push(us.email)
+        }
+      })
+      if (emptyTeamUser.length === 0) return
+      this.serverChanUrl = `https://sc.ftqq.com/${this.SCKEY}.send?text=来自夏影的温馨提醒&desp=你的这些账号[${emptyTeamUser.join('，')}]已经不在队伍里面，我怀疑已经掉线了`
+    }, 310000);
   },
   methods: {
+    handleDMflag () {
+      localStorage.setItem('dmflag', this.openDm)
+    },
+    handleSCKEYChange () {
+      localStorage.setItem('sckey', this.SCKEY)
+    },
     frameLoad (index) {
       if (index != 0) return;
       this.msgList = this.$refs['userFrame'][0].contentWindow.chatMsg
@@ -124,10 +168,12 @@ export default {
       this.sendMsg = ''
     },
     async handleLogin () {
-      const rs = await this.$refs['formInline'].validate()
-      if (rs) {
-        this.onAddUser(this.formInline.user, this.formInline.password)
+      const formInline = this.formInline;
+      if (!formInline.user || !formInline.password) {
+        this.$Message.error('账号密码没填好');
+        return;
       }
+      this.onAddUser(formInline.user, formInline.password)
     },
     /**
      * 将账号密码保存到 localStorage 中
@@ -160,7 +206,7 @@ export default {
       // 保存账号密码
       this.saveStorageUser(email, passwd);
       // 添加进去
-      this.userList.push({ email, password: passwd })
+      this.userList.push({ email, isLogin: true, password: passwd })
     },
     handleReload (index) {
       this.$refs['userFrame'][index].contentWindow.location.reload()
@@ -187,6 +233,9 @@ export default {
   position: relative;
   overflow-x: hidden;
   height: 100%;
+  .formitem {
+    width: 100px;
+  }
   .dm {
     word-break: keep-all;
     position: absolute;
@@ -203,7 +252,7 @@ export default {
     width: 100%;
     .card {
       display: inline-block;
-      width: calc(20% - 8px);
+      width: 100%;
       height: 430px;
       margin: 0 8px 8px 0;
       vertical-align: top;;
@@ -213,12 +262,6 @@ export default {
     width: 100%;
     height: 100%;
     border: 0;
-  }
-  .chart {
-    position: fixed;
-    bottom: 8px;
-    right: 8px;
-    width: 50%;
   }
 }
 </style>
