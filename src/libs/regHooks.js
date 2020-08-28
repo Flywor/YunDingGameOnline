@@ -235,7 +235,10 @@ export default function (_app) {
         })
         
         // 匹配捕捉的宠物名称
-        const catchTarget = battleUnit.find(bu => user.catchPet.includes(bu.name) && bu.skills.length > 0)
+        let catchTarget
+        if (user.catchPet && user.catchPet.includes) {
+            catchTarget = battleUnit.find(bu => user.catchPet.includes(bu.name) && bu.skills.length > 0)
+        }
         this.roundOperating(
             catchTarget ? '1001' : (user.skilltype || '1'),
             catchTarget ? '' : (user.skillid || '1'),
