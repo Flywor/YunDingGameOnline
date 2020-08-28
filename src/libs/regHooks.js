@@ -38,13 +38,11 @@ export default function (_app) {
         if ('object' != typeof data.data) {
             return;
         }
-
         app.$set(user, 'userEqs', data.data.userEqs);
         app.$set(user, 'myInfo', data.data.myInfo);
         app.$set(user, 'userTasks', data.data.userTasks);
         // 记录地图位置
         app.$set(user, 'map', data.data.map);
-
         // 获取一些初始化的信息
         this.userInfo();
         // 获取地图队伍列表
@@ -222,8 +220,28 @@ export default function (_app) {
 
     // 战斗开始
     let onStartBatCb = function (data) {
+        if (data.code != 200) {
+            app.$Message.error(data.msg);
+            return;
+        }
         const user = app.user
-        this.roundOperating(user.skilltype || '1', user.skillid || '1', user.target || '', user.team ? user.team._id : '');
+        const battleUnit = data.data.initData
+
+        // 储存怪物列表，用以指定捕捉
+        battleUnit.filter(bu => !bu.is_palyer).map(bu => {
+            if (!app.monsterList.includes(bu.name)) {
+                app.monsterList.push(bu.name)
+            }
+        })
+        
+        // 匹配捕捉的宠物名称
+        const catchTarget = battleUnit.find(bu => user.catchPet.includes(bu.name) && bu.skills.length > 0)
+        this.roundOperating(
+            catchTarget ? '1001' : (user.skilltype || '1'),
+            catchTarget ? '' : (user.skillid || '1'),
+            catchTarget ? catchTarget.id: '',
+            user.team ? user.team._id : ''
+        );
     }
     onStartBatCb.hookMark = "regHooks.onStartBatCb";
     GameApi.regHookHandlers['onStartBat'].push(onStartBatCb);
@@ -387,6 +405,17 @@ export default function (_app) {
     }
     useGoodsCb.hookMark = "regHooks.useGoodsCb";
     GameApi.regHookHandlers['connector.userHandler.useGoods'].push(useGoodsCb);
+
+    // 仙蕴聚灵
+    let polyLinCb = function (data) {
+        if (data.code != 200) {
+            app.$Message.error(data.msg);
+            return;
+        }
+        this.userInfo();
+    }
+    polyLinCb.hookMark = "regHooks.polyLinCb";
+    GameApi.regHookHandlers['connector.userHandler.polyLin'].push(polyLinCb);
 
     // 分解物品回调
     let sellGoodsCb = function (data) {
@@ -578,8 +607,6 @@ export default function (_app) {
 
         app.$set(app.user, 'myPets', data.data.data);
     }
-
-
     getMyPetCb.hookMark = "regHooks.getMyPetCb";
     GameApi.regHookHandlers['connector.userHandler.getMyPet'].push(getMyPetCb);
 

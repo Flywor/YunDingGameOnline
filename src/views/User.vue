@@ -29,8 +29,6 @@
         </Button>
       </ButtonGroup>
     </p>
-
-    <!-- 战斗统计 ↑ -->
     <template v-if="user.myInfo">
       <div class="br" />
       <p>
@@ -85,7 +83,10 @@
       </p>
       <div class="br" />
       <p>
-        气血储备：{{ Math.floor(user.myInfo.hp_store) }}&nbsp;魔法储备：{{ Math.floor(user.myInfo.mp_store) }}
+        气血储备：{{ Math.floor(user.myInfo.hp_store) }}
+        &nbsp;魔法储备：{{ Math.floor(user.myInfo.mp_store) }}
+        &nbsp;活力：{{ Math.floor(user.myInfo.vitality_num) }}
+        &nbsp;<a @click="game.polyLin(3)">仙蕴转活力</a>
       </p>
     </template>
     <!-- 修炼 -->
@@ -347,7 +348,7 @@
     >
       <Button
         size="small"
-        type="default"
+        type="warning"
       >
         {{user.skillname || '物理攻击'}}
       </Button>
@@ -373,13 +374,30 @@
         </template>
       </div>
     </Poptip>
-    <Button
-      size="small"
-      type="info"
-      @click="catchPets"
-      style="margin:5px"
-    >捕捉</Button>
-    <span style="color:#d2d4d6;font-size:12px">(勉强能用)</span>
+    <!-- 捕捉 ↓ -->
+    <div class="br" />
+    捕捉：
+    <Select v-model="user.catchPet" multiple size="small" style="width: auto;">
+      <Option
+        v-for="monster in monsterList"
+        :value="monster"
+        :key="monster"
+      >
+        {{monster}}
+      </Option>
+    </Select>
+    &nbsp;
+    丢弃
+    <Select v-model="user.discardPet" multiple size="small" style="width: auto;">
+      <Option
+        v-for="monster in monsterList"
+        :value="monster"
+        :key="monster"
+      >
+        {{monster}}
+      </Option>
+    </Select>
+    <!-- 捕捉 ↑ -->
     <!-- 技能 ↑ -->
     <div class="br" />
     宠物：
@@ -397,7 +415,11 @@
       &nbsp;
       <div
         style="display:inline-block"
-        v-html="user.message.msg.join(',')"
+        v-html="user.message.mark"
+      />
+      <div
+        style="display:inline-block"
+        v-html="user.message.msg.join('<br />')"
       />
     </div>
     <!-- 战斗信息 ↑ -->
@@ -740,7 +762,7 @@
         <Icon type="ios-information-circle"></Icon>
         <span>确定{{handleData.name}}？</span>
       </p>
-      <div style="text-align:center">
+      <div v-if="handleData.name !== '放生'" style="text-align:center">
         <img
           v-if="handleData.type<6"
           src="https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1593343846064&di=97a86fe902b9754de368f02e336e4eab&imgtype=0&src=http%3A%2F%2Fwww.11xzb.com%2Fd%2Ffile%2Fmoban5%2F201909020832%2F1567158444899421.png"
@@ -887,8 +909,7 @@ export default {
       handleData: {},
       pet1: "",
       pet2: "",
-      target: "粉红海兔",
-      msgList: []
+      monsterList: JSON.parse(localStorage.getItem('monsterList') || '[]'), // 怪物列表
     };
   },
   watch: {
@@ -908,6 +929,12 @@ export default {
         this.saveStorageUserInfo(user);
       },
     },
+    monsterList: {
+      deep: true,
+      handler (list) {
+        localStorage.setItem('monsterList', JSON.stringify(list))
+      }
+    }
   },
   filters: {
     addStyle(val) {
@@ -1137,27 +1164,27 @@ export default {
               column2: `魔法伤害：${Math.round(ele.magic_damage)}`,
               column3: `魔力：${ele.int}`,
             },
-            {
-              column1: `体力资质：${ele.con_zz}`,
-              column2: `魔法防御：${Math.round(ele.magic_defense)}`,
-              column3: `体质：${ele.con}`,
-            },
-            {
-              column1: `防御资质：${ele.vit_zz}`,
-              column2: `物理防御：${Math.round(ele.physical_defense)}`,
-              column3: `耐力：${ele.vit}`,
-            },
+            // {
+            //   column1: `体力资质：${ele.con_zz}`,
+            //   column2: `魔法防御：${Math.round(ele.magic_defense)}`,
+            //   column3: `体质：${ele.con}`,
+            // },
+            // {
+            //   column1: `防御资质：${ele.vit_zz}`,
+            //   column2: `物理防御：${Math.round(ele.physical_defense)}`,
+            //   column3: `耐力：${ele.vit}`,
+            // },
 
-            {
-              column1: `速资质度：${ele.speed_zz}`,
-              column2: `速度：${Math.round(ele.speed)}`,
-              column3: `敏捷：${ele.agi}`,
-            },
-            {
-              column1: `躲避质度：${ele.dodge_zz}`,
-              column2: `躲避：${Math.round(ele.dodge)}`,
-              column3: `潜力：${ele.potential_num}`,
-            },
+            // {
+            //   column1: `速资质度：${ele.speed_zz}`,
+            //   column2: `速度：${Math.round(ele.speed)}`,
+            //   column3: `敏捷：${ele.agi}`,
+            // },
+            // {
+            //   column1: `躲避质度：${ele.dodge_zz}`,
+            //   column2: `躲避：${Math.round(ele.dodge)}`,
+            //   column3: `潜力：${ele.potential_num}`,
+            // },
           ];
           let skills = [];
           skill.forEach((item) => {
@@ -1249,6 +1276,8 @@ export default {
           email: user.email,
           skillid: user.skillid,
           skillname: user.skillname,
+          catchPet: user.catchPet,
+          discardPet: user.discardPet || []
         })
       );
     },
@@ -1299,14 +1328,23 @@ export default {
       this.fightGains.beginTime = this.fightGains.beginTime || messageTime;
       //回合数+1
       this.fightGains.roundCount++;
-      const msg = data.round_arr.find((dr) => dr.a_name === email);
-      data.msg = [
-        msg
-          ? `${email}使用了[${msg.process}]造成了[${msg.hurt
+      data.msg = data.round_arr.map(ra => {
+        if (ra.a_skill_type === 1) {
+          if (ra.mark.indexOf('成功') > 1) {
+            this.game.getMyPet();
+            console.log(this.petsInfo)
+            this.petsInfo.map(pet => {
+              if (this.user.discardPet.find(dp => dp.indexOf(pet.name) > -1)) {
+                this.game.upUserPetLevel(pet._id, 3, 0);
+              }
+            });
+          }
+          return ra.mark;
+        }
+        return `【${ra.a_name}】对【${ra.b_name}】使用了【${ra.process}】造成了【${ra.hurt
               .map(Math.floor)
-              .join(",")}]伤害`
-          : "",
-      ];
+              .join(",")}】伤害`
+      })
 
       if (data.die_arr && data.die_arr.length) {
         data.msg.push(data.die_arr.map((da) => `${da}卒`).join(","));
@@ -1315,7 +1353,7 @@ export default {
       if (data.win === 1) {
         data.exp.forEach((item) => {
           if (item.name == email) {
-            data.msg.push(`获得经验[${item.exp || "没经验了"}]`);
+            data.msg.push(`获得经验[${Math.floor(item.exp) || "没经验了"}]`);
             this.fightGains.gainExp += Math.floor(item.exp);
             this.fightGains.fightCount++;
           }
@@ -1345,7 +1383,7 @@ export default {
         });
       }
       if (data.win === 2) {
-        data.msg.push("死亡");
+        data.msg.push("你死了");
         this.fightGains.fightCount++;
       }
 
@@ -1570,13 +1608,6 @@ export default {
       if (data.type !== 1) {
         this.modal = false;
       }
-    },
-    //抓宝宝
-    catchPets(val) {
-      this.$set(this.user, 'skilltype', '1001');
-      this.$set(this.user, 'skillid', '');
-      this.$set(this.user, 'skillname', '捕捉');
-      this.$set(this.user, 'target', this.target);
     },
     async handleAutoWaBao () {
       if (this.user.team || this.user.fighting || this.user.message) {
