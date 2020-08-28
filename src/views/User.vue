@@ -895,13 +895,13 @@ export default {
         {
           title: "column2",
           key: "column2",
-          width: 85,
+          width: 100,
           align: "center",
         },
         {
           title: "column3",
           key: "column3",
-          width: 65,
+          width: 80,
           align: "center",
         },
       ],
