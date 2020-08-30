@@ -238,12 +238,14 @@ GameApi.regHookHandlers = {
     "connector.teamHandler.roundOperating": [],    //  回合操作
     "connector.teamHandler.showMyTeam": [],    //  显示我的团队
     "connector.teamHandler.startCombat": [],
+    "connector.teamHandler.startCombatBoss": [],
     "connector.teamHandler.switchCombatScreen": [], // 切换战斗场景
     "connector.userHandler.addUserPetSkill": [],    //  添加用户宠物技能
     "connector.userHandler.allSellGoods": [],    //  整理
     "connector.userHandler.allocationPoint": [],    //  保存/分配属性点
     "connector.userHandler.fbProcess": [],    //  法宝点击
     "connector.userHandler.fitPet": [],    //  确认合成
+    "connector.userHandler.forgingUserEq": [],    //  进阶装备
     "connector.userHandler.getMyFb": [],    //  获取我的法宝
     "connector.userHandler.getMyGoods": [],    //  初始我得物品
     "connector.userHandler.getMyPet": [],    //  初始我得宠物
