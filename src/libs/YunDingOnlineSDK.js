@@ -224,6 +224,7 @@ GameApi.regHookHandlers = {
     "connector.systemHandler.getRankList": [],    //  排行榜
     "connector.systemHandler.getSystemSellGoods": [],    //  初始系统中出售物品
     "connector.systemHandler.getSystemTask": [],    //  初始任务中心
+    "connector.systemHandler.subSystemMsg": [],    //  初始任务中心
     "connector.teamHandler.addTeam": [],    // 加入队伍
     "connector.teamHandler.createdTeam": [ // //  创建队伍
         CoreHooks.onSaveData
@@ -263,6 +264,7 @@ GameApi.regHookHandlers = {
     "connector.userHandler.shelfMyGoods": [],    //  取回到背包
     "connector.userHandler.turnIntoPet": [],    //  幻化宠物
     "connector.userHandler.upPlayerLevel": [],
+    "connector.playerHandler.upLevelUserSkill": [],
     "connector.userHandler.upUserPetLevel": [],    //  升级宠物
     "connector.userHandler.updateUserPrice": [],    //  更新玩家货币
     "connector.userHandler.useGoods": [],    //  使用物品
@@ -829,6 +831,13 @@ GameApi.prototype.upPlayerLevel = function () {
 }
 
 /**
+* 升级技能
+*/
+GameApi.prototype.upLevelUserSkill = function (type, id) {
+    this.sendMessage({ type, id }, "connector.playerHandler.upLevelUserSkill");
+}
+
+/**
 * 法宝点击
 * @param type 1 升星 2共生 3养灵 4佩戴
 * @param id
@@ -1125,6 +1134,11 @@ GameApi.prototype.byGoodsToSystem = function (type, id) {
 */
 GameApi.prototype.getSystemTask = function () {
     this.sendMessage({}, "connector.systemHandler.getSystemTask");
+}
+
+// 开关系统广播
+GameApi.prototype.subSystemMsg = function (status) {
+    this.sendMessage({ status }, "connector.systemHandler.subSystemMsg");
 }
 
 /**

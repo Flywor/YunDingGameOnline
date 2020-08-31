@@ -7,6 +7,32 @@ window.chatMsg = []
 export default function (_app) {
     const app = _app;
 
+    function buildUserTasks (userTasks) {
+        console.log(userTasks)
+        const taskList = []
+        userTasks.map(task => {
+            const give = []
+            task.task.give_goods.map((gds, i) => {
+                give.push(`${gds.name} x ${task.task.give_goods_num[i].count}`)
+            })
+
+            const need = []
+            task.needGoods.map(gds => {
+                need.push(`${gds.name} [${gds.have_count}/${gds.need_count}]`)
+            })
+
+            taskList.push({
+                utid: task.utid,
+                _id: task.task._id,
+                title: task.task.name,
+                info: task.task.info,
+                give,
+                need
+            })
+        })
+        app.$set(app.user, 'userTasks', taskList);
+    }
+
     // 创建空函数 屏蔽 onLeave onAdd 消息刷屏
     let emptyCb = () => {};
     emptyCb.hookMark = 'regHooks.emptyCb';
@@ -40,11 +66,12 @@ export default function (_app) {
         }
         app.$set(user, 'userEqs', data.data.userEqs);
         app.$set(user, 'myInfo', data.data.myInfo);
-        app.$set(user, 'userTasks', data.data.userTasks);
+        buildUserTasks(data.data.userTasks);
         // 记录地图位置
         app.$set(user, 'map', data.data.map);
         // 获取一些初始化的信息
         this.userInfo();
+        this.getSystemTask(); // 任务中心
         // 获取地图队伍列表
         this.getTeamList(app.user.map.id);
         // 获取物品信息
@@ -228,16 +255,17 @@ export default function (_app) {
         const battleUnit = data.data.initData
 
         // 储存怪物列表，用以指定捕捉
-        battleUnit.filter(bu => !bu.is_palyer).map(bu => {
-            if (!app.monsterList.includes(bu.name)) {
-                app.monsterList.push(bu.name)
+        battleUnit.filter(bu => bu.team == 2).map(bu => {
+            const petname = bu.name.replace(/<[^>]+>/g, '')
+            if (!app.monsterList.includes(petname)) {
+                app.monsterList.push(petname)
             }
         })
         
         // 匹配捕捉的宠物名称
         let catchTarget
         if (user.catchPet && user.catchPet.includes) {
-            catchTarget = battleUnit.find(bu => user.catchPet.includes(bu.name) && bu.skills.length > 0)
+            catchTarget = battleUnit.find(bu => user.catchPet.includes(bu.name.replace(/<[^>]+>/g, '')))
         }
         this.roundOperating(
             catchTarget ? '1001' : (user.skilltype || '1'),
@@ -497,7 +525,6 @@ export default function (_app) {
             7: { name: '神境', exp: 500000 }
         };
         data.data.arms_exp.map((exp, index) => {
-            if (index >= 2) return
             const typeName = typeMap[index];
             const level = levelMap[data.data.arms_level[index]];
             arms.push({ exp, needExp: level.exp, name: `${typeName}${level.name}` });
@@ -506,6 +533,17 @@ export default function (_app) {
     }
     getMySkillCb.hookMark = "regHooks.getMySkillCb";
     GameApi.regHookHandlers['connector.userHandler.getMySkill'].push(getMySkillCb);
+
+    // 升级主动技能
+    let upLevelUserSkillCb = function (data) {
+        if (data.code != 200) {
+            app.$Message.error(data.msg || `${data.code}错误但是没有错误信息，不知道作者搞什么鬼`);
+            return;
+        }
+        this.getMySkill();
+    }
+    upLevelUserSkillCb.hookMark = "regHooks.upLevelUserSkillCb";
+    GameApi.regHookHandlers['connector.playerHandler.upLevelUserSkill'].push(upLevelUserSkillCb);
 
     // 分配属性点回调
     let allocationPointCb = function (data) {
@@ -518,7 +556,28 @@ export default function (_app) {
     allocationPointCb.hookMark = "regHooks.allocationPointCb";
     GameApi.regHookHandlers['connector.userHandler.allocationPoint'].push(allocationPointCb);
 
-    // 领取高级宝图任务
+    // 获取系统任务
+    let getSystemTaskCb = function (data) {
+        if (data.code != 200) {
+            app.$Message.error(data.msg);
+            return;
+        }
+        
+        console.log(data)
+        const taskList = []
+        data.data.list.map(task => {
+            taskList.push({
+                _id: task._id,
+                title: task.name,
+                info: task.info
+            })
+        })
+        app.$set(app.user, 'systemTask', taskList);
+    }
+    getSystemTaskCb.hookMark = "regHooks.getSystemTaskCb";
+    GameApi.regHookHandlers['connector.systemHandler.getSystemTask'].push(getSystemTaskCb);
+
+    // 领取任务
     let getCopyTaskCb = function (data) {
         
         if (data.code != 200) {
@@ -536,7 +595,8 @@ export default function (_app) {
             app.$Message.error(data.msg);
             return;
         }
-        app.$set(app.user, 'userTasks', data.data);
+        console.log(data.data)
+        buildUserTasks(data.data)
     }
     getUserTaskCb.hookMark = "regHooks.getUserTaskCb";
     GameApi.regHookHandlers['connector.userHandler.getUserTask'].push(getUserTaskCb);
@@ -548,7 +608,6 @@ export default function (_app) {
             app.$Message.error(data.msg);
             return;
         }
-        app.$Message.success('成功领到高级藏宝图，正在刷新背包');
         // 重置背包
         app.user.goods = [];
         app.user.goodsPage = 1;

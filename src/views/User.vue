@@ -27,6 +27,21 @@
         >
           收益
         </Button>
+        <Button
+          size="small"
+          type="info"
+          @click="showMypets=true"
+        >宠物</Button>
+        <Button
+          size="small"
+          type="info"
+          @click="showSkills=true"
+        >技能</Button>
+        <Button
+          size="small"
+          type="info"
+          @click="showTasks=true"
+        >任务</Button>
       </ButtonGroup>
     </p>
     <template v-if="user.myInfo">
@@ -89,88 +104,40 @@
         &nbsp;<a @click="game.polyLin(3)">仙蕴转活力</a>
       </p>
     </template>
-    <!-- 修炼 -->
-    <template v-if="user.arms">
-      <div class="br" />
-      <div>
-        <Tag v-for="arm in user.arms" :key="arm.name">
-          {{arm.name}}[{{arm.exp}}/{{arm.needExp}}]
-        </Tag>
-        &nbsp;
-        <Poptip
-          transfer
-          placement="bottom"
-        >
-          <Button
-            size="small"
-            type="info"
-          >
-            点技能
-          </Button>
-          <div slot="content">
-            <Input v-model="upSkillNum" type="number" style="width: 180px">
-              <Select transfer v-model="upSkillType" slot="prepend" style="width: 60px;">
-                <Option :value="1">剑修</Option>
-                <Option :value="2">枪修</Option>
-              </Select>
-              <Button slot="append" type="primary" size="small" @click="handleFationSkill">确定</Button>
-            </Input>
-          </div>
-        </Poptip>
-      </div>
-    </template>
     <!-- 挖宝 ↓ -->
-    <template>
-      <template v-if="unusecbt">
-        <template v-if="unusecbt.normal">
-          <div class="br" />
-          检测到你有
-          <span style="color: red">{{unusecbt.normal.num}}</span>
-          张没鉴定的
-          <span style="color: red">藏宝图</span>
-          [<a @click="() => {
-            game.useGoods(unusecbt.normal.id)
-          }">鉴定一张</a>]
-          [<a @click="() => {
-            readToUse = {
-              useNum: unusecbt.normal.num,
-              id: unusecbt.normal.id,
-              name: '藏宝图'
-            };
-            handleUseItem()
-          }">全部鉴定</a>]
-          <template v-if="unusecbt.normal.num >= 12">
-            <div class="br" />
-            <a
-              v-if="hightcbtTask"
-              @click="game.payUserTask(hightcbtTask.utid)"
-            >
-              完成
-            </a>
-            <a
-              v-else
-              @click="game.getCopyTask(hightcbtTaskId)"
-            >
-              领取
-            </a>
-            高级宝图任务
-          </template>
-        </template>
-        <template v-if="unusecbt.high">
-          <div class="br" />
-          检测到你有
-          <span style="color: red">{{unusecbt.high.num}}</span>
-          张没鉴定的
-          <span style="color: red">高级藏宝图</span>
-          [<a @click="() => {
-            readToUse = {
-              useNum: unusecbt.high.num,
-              id: unusecbt.high.id,
-              name: '高级藏宝图'
-            };
-            handleUseItem();
-          }">全部鉴定</a>]
-        </template>
+    <template v-if="unusecbt">
+      <template v-if="unusecbt.normal">
+        <div class="br" />
+        检测到你有
+        <span style="color: red">{{unusecbt.normal.num}}</span>
+        张没鉴定的
+        <span style="color: red">藏宝图</span>
+        [<a @click="() => {
+          game.useGoods(unusecbt.normal.id)
+        }">鉴定一张</a>]
+        [<a @click="() => {
+          readToUse = {
+            useNum: unusecbt.normal.num,
+            id: unusecbt.normal.id,
+            name: '藏宝图'
+          };
+          handleUseItem()
+        }">全部鉴定</a>]
+      </template>
+      <template v-if="unusecbt.high">
+        <div class="br" />
+        检测到你有
+        <span style="color: red">{{unusecbt.high.num}}</span>
+        张没鉴定的
+        <span style="color: red">高级藏宝图</span>
+        [<a @click="() => {
+          readToUse = {
+            useNum: unusecbt.high.num,
+            id: unusecbt.high.id,
+            name: '高级藏宝图'
+          };
+          handleUseItem();
+        }">全部鉴定</a>]
       </template>
     </template>
     <template v-if="waBao.length > 0">
@@ -232,7 +199,6 @@
     <!-- 地图 ↑ -->
     <!-- 副本 ↓ -->
     <template v-if="user.team && user.team.leader === user.email">
-      <div class="br" />
       副本：
       <Poptip
         transfer
@@ -264,11 +230,10 @@
       </Poptip>
     </template>
     <!-- 副本 ↑ -->
-    <div class="br" />
     <!-- 组队 ↓ -->
     队伍：
     <template v-if="user.team && user.team.leader === user.email">
-      [{{ user.team.users.length || 1 }}/5]
+      [{{ user.team.users.length || 1 }}/{{user.combatTotal || '未知'}}]
       <Button
         @click="game.leaveTeam()"
         size="small"
@@ -375,19 +340,19 @@
       </div>
     </Poptip>
     <!-- 捕捉 ↓ -->
-    <div class="br" />
     捕捉：
     <Select v-model="user.catchPet" multiple size="small" style="width: auto;">
       <Option
         v-for="monster in monsterList"
         :value="monster"
+        :label="monster"
         :key="monster"
       >
         {{monster}}
       </Option>
     </Select>
     &nbsp;
-    丢弃
+    丢弃：
     <Select v-model="user.discardPet" multiple size="small" style="width: auto;">
       <Option
         v-for="monster in monsterList"
@@ -397,15 +362,6 @@
         {{monster}}
       </Option>
     </Select>
-    <!-- 捕捉 ↑ -->
-    <!-- 技能 ↑ -->
-    <div class="br" />
-    宠物：
-    <Button
-      size="small"
-      type="info"
-      @click="showMypets=true"
-    >查看</Button>
     <div class="br" />
     <!-- 战斗信息 ↓ -->
     <div v-if="'object' == typeof user.message">
@@ -414,11 +370,9 @@
       {{'第' + user.message.round_num + '轮'}}
       &nbsp;
       <div
-        style="display:inline-block"
         v-html="user.message.mark"
       />
       <div
-        style="display:inline-block"
         v-html="user.message.msg.join('<br />')"
       />
     </div>
@@ -647,6 +601,96 @@
       </CellGroup>
     </Modal>
     <!-- 人物属性↑ -->
+    <!-- 人物技能↓ -->
+    <Modal
+      v-model="showSkills"
+      fullscreen
+      footer-hide
+      title="人物技能"
+    >
+      <template v-if="user.arms">
+        <Tag v-for="arm in user.arms" :key="arm.name">
+          {{arm.name}}[{{arm.exp}}/{{arm.needExp}}]
+        </Tag>
+        <div class="br" />
+        <div class="br" />
+        <div class="br" />
+        <Input v-model="upSkillNum" type="number">
+          <Select transfer v-model="upSkillType" slot="prepend" style="width: 100px">
+            <Option :value="1">剑修</Option>
+            <Option :value="2">枪修</Option>
+            <Option :value="3">锤修</Option>
+            <Option :value="4">伞修</Option>
+          </Select>
+          <Button slot="append" type="primary" size="small" @click="handleFationSkill">确定</Button>
+        </Input>
+      </template>
+      <template v-if="user.skills">
+        <div v-for="skill in user.skills" :key="skill._id">
+          <div class="br" />
+          <div class="br" />
+          <div class="br" />
+          {{skill.name}}：
+          <ButtonGroup size="small">
+            <Button @click="() => game.upLevelUserSkill(1, skill._id)">
+              基础伤害{{skill.real_damage}}
+              <Icon type="md-arrow-round-up" />
+            </Button>
+            <Button @click="() => game.upLevelUserSkill(2, skill._id)">
+              属性波动【{{skill.min_hurt}} ~ {{skill.max_hurt}}】
+              <Icon type="md-arrow-round-up" />
+            </Button>
+            <Button @click="() => game.upLevelUserSkill(3, skill._id)">
+              作用单位【{{skill.unit}}】
+              <Icon type="md-arrow-round-up" />
+            </Button>
+          </ButtonGroup>
+        </div>
+      </template>
+    </Modal>
+    <!-- 人物技能↑ -->
+    <!-- 任务↓ -->
+    <Modal
+      v-model="showTasks"
+      fullscreen
+      footer-hide
+      title="任务中心"
+    >
+      <List>
+        <ListItem v-for="task in user.userTasks" :key="task.utid">
+          <ListItemMeta
+            :description="`${task.info} - 所需物品：${task.need.join(',')}`"
+          >
+            <template slot="title">
+              <p v-html="`${task.title} - 奖励物品：${task.give.join(',')}`"></p>
+            </template>
+          </ListItemMeta>
+          <template slot="action">
+            <li>
+              <a @click="game.payUserTask(task.utid)">完成</a>
+            </li>
+          </template>
+        </ListItem>
+      </List>
+      <Divider orientation="left">系统任务</Divider>
+      <List>
+        <ListItem v-for="task in user.systemTask" :key="task._id">
+          <ListItemMeta
+            :description="`${task.info}`"
+          >
+            <template slot="title">
+              <p v-html="task.title"></p>
+            </template>
+          </ListItemMeta>
+          <template slot="action">
+            <li>
+              <a @click="game.getCopyTask(task._id)">领取</a>
+            </li>
+          </template>
+        </ListItem>
+      </List>
+    </Modal>
+    <!-- 任务↑ -->
     <!-- 宠物信息↓ -->
     <Modal
       v-model="showMypets"
@@ -873,6 +917,8 @@ export default {
       showEqsInfo: false,
       showUserInfo: false,
       showMypets: false,
+      showSkills: false,
+      showTasks: false,
       fightGains: {
         goods: {}, //战利品
         gainExp: 0, //获得经验
@@ -917,15 +963,20 @@ export default {
       deep: true,
       handler(user) {
         let combatName = null;
+        let combatTotal = 0;
         if (user && user.screens && user.team) {
           if (user.team.combat) {
             const combat = user.screens.find(
               (scr) => scr._id === user.team.combat
             );
-            if (combat) combatName = combat.name;
+            if (combat) { 
+              combatName = combat.name;
+              combatTotal = combat.player_num;
+            }
           }
         }
         user.combatName = combatName;
+        user.combatTotal = combatTotal;
         this.saveStorageUserInfo(user);
       },
     },
@@ -1332,9 +1383,8 @@ export default {
         if (ra.a_skill_type === 1) {
           if (ra.mark.indexOf('成功') > 1) {
             this.game.getMyPet();
-            console.log(this.petsInfo)
             this.petsInfo.map(pet => {
-              if (this.user.discardPet.find(dp => dp.indexOf(pet.name) > -1)) {
+              if (this.user.discardPet.find(dp => pet.name.indexOf(dp) > -1)) {
                 this.game.upUserPetLevel(pet._id, 3, 0);
               }
             });
@@ -1353,7 +1403,7 @@ export default {
       if (data.win === 1) {
         data.exp.forEach((item) => {
           if (item.name == email) {
-            data.msg.push(`获得经验[${Math.floor(item.exp) || "没经验了"}]`);
+            data.msg.push(`获得经验【${Math.floor(item.exp) || "没经验了"}】`);
             this.fightGains.gainExp += Math.floor(item.exp);
             this.fightGains.fightCount++;
           }
@@ -1368,7 +1418,7 @@ export default {
                 reward.push(good.gname);
               });
               if (reward.length > 0) {
-                data.msg.push(`战利品[${reward.join(",")}]`);
+                data.msg.push(`战利品【${reward.join(",")}】`);
                 //获取战利品后,添加更新背包的状态
                 this.user.updateGoods = true;
                 //合并，更新战利品
@@ -1669,10 +1719,6 @@ export default {
     justify-content: space-between;
   }
 
-  .br {
-    height: 5px;
-    width: 100%;
-  }
 }
 .fight-gains {
   ul {
@@ -1692,6 +1738,10 @@ export default {
 }
 </style>
 <style lang="less">
+.br {
+  height: 5px;
+  width: 100%;
+}
 .ivu-modal-header {
   padding: 8px 4px !important;
 }

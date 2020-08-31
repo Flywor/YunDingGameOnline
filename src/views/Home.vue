@@ -34,7 +34,7 @@
             :xs="24"
             :md="12"
             :xl="8"
-            :xxl="4"
+            :xxl="8"
             v-for="(user, index) in userList"
             :key="user.email"
           >
@@ -58,7 +58,7 @@
           </Col>
       </Row>
     </div>
-    <div v-show="openDm">
+    <div>
       <Tag
         v-for="msg in msgDm"
         :key="msg.key"
@@ -81,7 +81,6 @@ import { sleep, randomNum } from "@libs/tools";
 export default {
   name: 'Home',
   data () {
-    const dmflag = localStorage.getItem('dmflag')
     return {
       randomNum,
       baseUrl: `${location.origin}${location.pathname}`,
@@ -90,8 +89,7 @@ export default {
         password: ''
       },
       userList: [],
-      showChat: false,
-      openDm: dmflag ? dmflag === 'true': true,
+      openDm: false,
       msgList: [],
       msgDm: [],
       sendMsg: '',
@@ -106,6 +104,7 @@ export default {
       handler (length) {
         if (length === 0) return
         const dm = this.msgList[length - 1]
+        if (this.msgDm.some(md => md.msg === dm.msg)) return
         dm.top = this.randomNum(0, this.dmline)
         dm.color = this.getDmColor(dm)
         this.msgDm.push(dm)
@@ -142,8 +141,8 @@ export default {
     }, 310000);
   },
   methods: {
-    handleDMflag () {
-      localStorage.setItem('dmflag', this.openDm)
+    handleDMflag (flag) {
+      this.$refs['userFrame'][0].contentWindow.game.subSystemMsg(flag ? 1: 0);
     },
     handleSCKEYChange () {
       localStorage.setItem('sckey', this.SCKEY)
@@ -151,6 +150,7 @@ export default {
     frameLoad (index) {
       if (index != 0) return;
       this.msgList = this.$refs['userFrame'][0].contentWindow.chatMsg
+      this.openDm = false
     },
     getDmColor (msg) {
       // 回收弹幕
@@ -238,7 +238,7 @@ export default {
   }
   .dm {
     word-break: keep-all;
-    position: absolute;
+    position: fixed;
     z-index: 9999;
     animation: dmframe 20s linear;
     top: 0;
