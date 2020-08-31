@@ -773,6 +773,11 @@
               type="primary"
               @click="handlePet(item,5)"
             >{{item.status?"休息":"参战"}}</Button>
+            <Button
+              size="small"
+              type="primary"
+              @click="handlePet(item,8)"
+            >{{(item.bat_num && item.status)?"主":(item.status == 1 ? "副" : "")}}</Button>
           </ButtonGroup>
           <ButtonGroup
             size="small"
@@ -806,7 +811,7 @@
         <Icon type="ios-information-circle"></Icon>
         <span>确定{{handleData.name}}？</span>
       </p>
-      <div v-if="handleData.name !== '放生'" style="text-align:center">
+      <div v-if="![5, 8].includes(handleData.type)" style="text-align:center">
         <img
           v-if="handleData.type<6"
           src="https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1593343846064&di=97a86fe902b9754de368f02e336e4eab&imgtype=0&src=http%3A%2F%2Fwww.11xzb.com%2Fd%2Ffile%2Fmoban5%2F201909020832%2F1567158444899421.png"
@@ -1193,7 +1198,7 @@ export default {
       const type = ["普通", "稀有", "传说", "PY"];
       arr &&
         arr.forEach((ele) => {
-          const { skill, _id, name, status } = ele;
+          const { skill, _id, name, status, bat_num } = ele;
           const data = [
             {
               column1: `等级：${ele.level}`,
@@ -1246,7 +1251,7 @@ export default {
             });
           });
           const point = ele.potential_num;
-          const obj = { _id, skills, name, data, status, point };
+          const obj = { _id, skills, name, data, status, point, bat_num };
           pets.push(obj);
         });
       return pets;
@@ -1605,7 +1610,7 @@ export default {
     },
     //宠物相关操作
     handlePet(obj, type, point) {
-      const arr = ["升级", "加点", "放生", "幻化", "参战/休息", "合成", "打书"];
+      const arr = ["升级", "加点", "放生", "幻化", "参战/休息", "合成", "打书", "主副战宠切换"];
       const points = {
         str: point === 1 ? obj.point : 0, // 力量
         int: point === 2 ? obj.point : 0, // 智力
@@ -1646,13 +1651,14 @@ export default {
         this.tabPaneName = `name${this.petsInfo.length - 1}`;
         this.pet1 = "";
         this.pet2 = "";
-
       }
       if (data.type === 7) {
         this.game.addUserPetSkill(this.pet2, this.pet1);
         this.pet1 = "";
         this.pet2 = "";
-
+      }
+      if (data.type === 8) {
+        this.game.playUserPet(data.data._id, 3);
       }
 
       if (data.type !== 1) {

@@ -8,13 +8,15 @@ export default function (_app) {
     const app = _app;
 
     function buildUserTasks (userTasks) {
-        console.log(userTasks)
         const taskList = []
         userTasks.map(task => {
             const give = []
             task.task.give_goods.map((gds, i) => {
                 give.push(`${gds.name} x ${task.task.give_goods_num[i].count}`)
             })
+            if (task.task.contribution_num) {
+                give.push(`帮贡 ${task.task.contribution_num}`)
+            }
 
             const need = []
             task.needGoods.map(gds => {
@@ -562,8 +564,6 @@ export default function (_app) {
             app.$Message.error(data.msg);
             return;
         }
-        
-        console.log(data)
         const taskList = []
         data.data.list.map(task => {
             taskList.push({
@@ -595,7 +595,6 @@ export default function (_app) {
             app.$Message.error(data.msg);
             return;
         }
-        console.log(data.data)
         buildUserTasks(data.data)
     }
     getUserTaskCb.hookMark = "regHooks.getUserTaskCb";
@@ -682,8 +681,6 @@ export default function (_app) {
 
         this.getMyPet()
     }
-
-
     upUserPetLevelCb.hookMark = "regHooks.upUserPetLevelCb";
     GameApi.regHookHandlers['connector.userHandler.upUserPetLevel'].push(upUserPetLevelCb);
 
@@ -694,12 +691,12 @@ export default function (_app) {
             app.$Message.error(data.msg);
             return;
         }
-        const msg = data.data.status ? `${data.data.name}参战成功` : `${data.data.name}休息成功`
-        app.$Message.success(msg);
+        if (data.data.name) {
+            const msg = data.data.status ? `${data.data.name}参战成功` : `${data.data.name}休息成功`
+            app.$Message.success(msg);
+        }
         this.getMyPet()
     }
-
-
     playUserPetCb.hookMark = "regHooks.playUserPetCb";
     GameApi.regHookHandlers['connector.userHandler.playUserPet'].push(playUserPetCb);
 
@@ -714,7 +711,6 @@ export default function (_app) {
         app.$Message.success(data.msg);
         this.getMyPet()
     }
-
     turnIntoPetCb.hookMark = "regHooks.turnIntoPetCb";
     GameApi.regHookHandlers['connector.userHandler.turnIntoPet'].push(turnIntoPetCb);
 
