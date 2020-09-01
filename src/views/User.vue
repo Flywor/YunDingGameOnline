@@ -637,7 +637,7 @@
               <Icon type="md-arrow-round-up" />
             </Button>
             <Button @click="() => game.upLevelUserSkill(2, skill._id)">
-              属性波动【{{skill.min_hurt}} ~ {{skill.max_hurt}}】
+              属性波动【{{skill.min_hurt.toFixed(2)}} ~ {{skill.max_hurt.toFixed(2)}}】
               <Icon type="md-arrow-round-up" />
             </Button>
             <Button @click="() => game.upLevelUserSkill(3, skill._id)">
