@@ -82,7 +82,6 @@ export default function (_app) {
         this.getMyGoods();
         // 获取技能信息
         this.getMySkill();
-        this.getMyPet();
     }
     loginCb.hookMark = "regHooks.loginCb";
     GameApi.regHookHandlers['gate.gateHandler.queryEntry'].push(loginCb);
@@ -672,7 +671,6 @@ export default function (_app) {
     GameApi.regHookHandlers['connector.userHandler.getMyPet'].push(getMyPetCb);
 
     //宠物升级、加点，放生
-
     let upUserPetLevelCb = function (data) {
         if (data.code != 200) {
             app.$Message.error(data.msg);
@@ -685,7 +683,6 @@ export default function (_app) {
     GameApi.regHookHandlers['connector.userHandler.upUserPetLevel'].push(upUserPetLevelCb);
 
     //宠物出战
-
     let playUserPetCb = function (data) {
         if (data.code != 200) {
             app.$Message.error(data.msg);
@@ -702,7 +699,6 @@ export default function (_app) {
 
 
     //宠物幻化
-
     let turnIntoPetCb = function (data) {
         if (data.code != 200) {
             app.$Message.error(data.msg);
@@ -715,7 +711,6 @@ export default function (_app) {
     GameApi.regHookHandlers['connector.userHandler.turnIntoPet'].push(turnIntoPetCb);
 
     //预览合宠
-
     let getNewPetCb = function (data) {
         if (data.code != 200) {
             app.$Message.error(data.msg);
@@ -724,12 +719,10 @@ export default function (_app) {
         app.$Message.success(data.msg);
         this.getMyPet()
     }
-
     getNewPetCb.hookMark = "regHooks.getNewPetCb";
     GameApi.regHookHandlers['connector.userHandler.getNewPet'].push(getNewPetCb);
 
     //确认合宠
-
     let fitPetCb = function (data) {
         if (data.code != 200) {
             app.$Message.error(data.msg);
@@ -738,7 +731,6 @@ export default function (_app) {
         app.$Message.success(data.msg);
         this.getMyPet()
     }
-
     fitPetCb.hookMark = "regHooks.fitPetCb";
     GameApi.regHookHandlers['connector.userHandler.fitPet'].push(fitPetCb);
 
@@ -751,9 +743,70 @@ export default function (_app) {
         app.$Message.success(data.msg);
         this.getMyPet()
     }
-
     addUserPetSkillCb.hookMark = "regHooks.addUserPetSkillCb";
     GameApi.regHookHandlers['connector.userHandler.addUserPetSkill'].push(addUserPetSkillCb);
+
+    // 上架出售
+    let playerSellGoodsCb = function (data) {
+        if (data.code != 200) {
+            app.$Message.error(data.msg);
+            return;
+        }
+        app.$Message.success(`${data.data.name} x ${data.data.sell.count}上架成功`);
+        // 重置背包
+        app.user.goods = [];
+        app.user.goodsPage = 1;
+        this.getMyGoods();
+    }
+    playerSellGoodsCb.hookMark = "regHooks.playerSellGoodsCb";
+    GameApi.regHookHandlers['connector.playerHandler.sellGoods'].push(playerSellGoodsCb);
+
+
+    // 获取市场物品
+    let getPlayerSellGoodsCb = function (data) {
+        if (data.code != 200) {
+            app.$Message.error(data.msg);
+            return;
+        }
+        data.data.playerSellUser.map(sell => {
+            app.user.market.list.push(sell);
+        })
+        if (app.user.market.list.length !== data.data.count) {
+            setTimeout(() => {
+                user.market.pageIndex++;
+                this.getPlayerSellGoods(user.market.pageIndex, user.market.type);
+            }, 1100)
+        } else {
+            const good_map_type = {};
+            app.user.market.list.map(gds => {
+                const name = gds.name || gds.goods.name;
+                if (app.user.market.keyword && name.indexOf(app.user.market.keyword) === -1) {
+                    return
+                }
+
+                if (!good_map_type[name]) {
+                    good_map_type[name] = [];
+                }
+
+                good_map_type[name].push(gds);
+            });
+
+            const sellGoods = [];
+            Object.keys(good_map_type).map(name => {
+                sellGoods.push({
+                    name,
+                    count: good_map_type[name].length,
+                    list: good_map_type[name].sort((n, m) => (n.sell_game_gold / n.count) - (m.sell_game_gold / m.count))
+                });
+            });
+            app.user.market.sellGoods = sellGoods;
+
+            app.$forceUpdate();
+            app.$Spin.hide();
+        }
+    }
+    getPlayerSellGoodsCb.hookMark = "regHooks.getPlayerSellGoodsCb";
+    GameApi.regHookHandlers['connector.playerHandler.getPlayerSellGoods'].push(getPlayerSellGoodsCb);
 
 
 }

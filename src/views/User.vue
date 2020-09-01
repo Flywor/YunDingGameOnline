@@ -30,7 +30,10 @@
         <Button
           size="small"
           type="info"
-          @click="showMypets=true"
+          @click="() => {
+            game.getMyPet();
+            showMypets = true;
+          }"
         >宠物</Button>
         <Button
           size="small"
@@ -42,6 +45,11 @@
           type="info"
           @click="showTasks=true"
         >任务</Button>
+        <Button
+          size="small"
+          type="info"
+          @click="showMarket = true"
+        >市场</Button>
       </ButtonGroup>
     </p>
     <template v-if="user.myInfo">
@@ -185,8 +193,11 @@
           >
             <a
               @click="() => {
-              game.moveToNewMap(item.id);
-            }"
+                $Message.warning(`正在切图去${item.name}，别乱点`)
+                moveToMap(item.id).then(() => {
+                  $Message.success(`${item.name}到了`)
+                });
+              }"
               size="small"
               style="width: 100%;"
             >
@@ -379,7 +390,7 @@
     <!-- 战斗信息 ↑ -->
     <!-- 背包↓ -->
     <Modal
-      v-model="opened"
+      v-model="showBag"
       fullscreen
       footer-hide
     >
@@ -411,7 +422,6 @@
             <label v-html="item.name"></label>({{item.num}})
           </Button>
         </Badge>
-
       </div>
       <div class="good-info">
         <p v-if="!readToUse">
@@ -440,12 +450,12 @@
             </template>
           </div>
           <div class="button-box">
-            <InputNumber
-              v-if="readToUse.goodsType !== '可装备的装备'"
-              :max="readToUse.num"
-              :min="1"
-              v-model="readToUse.useNum"
-            />
+            <Input v-model="readToUse.useNum" type="number">
+              <span slot="prepend">数量</span>
+            </Input>
+            <Input v-model="readToUse.sellPrice" type="number">
+              <span slot="prepend">总价</span>
+            </Input>
             <ButtonGroup
               size="small"
               vertical
@@ -476,7 +486,7 @@
               <Button
                 size="small"
                 type="primary"
-                @click="() => $Message.info('还没做嘤嘤嘤')"
+                @click="handleSellGoods"
               >
                 出售
               </Button>
@@ -496,7 +506,6 @@
                 分解
               </Button>
             </ButtonGroup>
-
           </div>
         </template>
       </div>
@@ -898,9 +907,92 @@
         >确认</Button>
       </div>
     </Modal>
-
+    <!-- 市场↓ -->
+    <Modal
+      v-model="showMarket"
+      fullscreen
+      footer-hide
+      title="市场"
+    >
+      <Form ref="formInline" inline>
+        <FormItem>
+          <Select v-model="user.market.type">
+            <Option value="1">装备</option>
+            <Option value="2">材料</option>
+            <Option value="3">技能书</option>
+            <Option value="4">制造类</option>
+            <Option value="5">宠物蛋</option>
+            <Option value="6">珍稀物品</option>
+            <Option value="7">法宝材料</option>
+            <Option value="8">低级兽决</option>
+            <Option value="9">高级兽决</option>
+          </Select>
+        </FormItem>
+        <FormItem>
+          <Input type="text" v-model="user.market.keyword" placeholder="物品名称" />
+        </FormItem>
+        <FormItem>
+          <Button type="primary" @click="() => {
+            $Spin.show();
+            user.market.pageIndex = 1;
+            user.market.list = [];
+            game.getPlayerSellGoods(user.market.pageIndex, user.market.type);
+          }">搜索</Button>
+        </FormItem>
+      </Form>
+      <Collapse>
+        <Panel
+          v-for="item in user.market.sellGoods"
+          :key="item.name"
+          :name="item.name"
+        >
+          {{item.name}} - {{item.count}}在售
+          <List slot="content" border size="small">
+            <ListItem
+              v-for="goods in item.list"
+              :key="goods._id"
+            >
+              <ListItemMeta
+                :description="`${(goods.sell_game_gold/goods.count).toFixed(0)}仙石/个，共${goods.count}个【卖家：${goods.user.nickname}】`"
+              />
+              <template slot="action">
+                <li v-if="user.market.type == '1'">
+                  <Tooltip>
+                    <a>属性</a>
+                    <div slot="content">
+                      <p
+                        v-for="(value, key) in getEqsInfo(goods)"
+                        :key="key"
+                      >
+                        <span :style="key | addStyle">{{key}}:</span>
+                        <span :style="key | addStyle">{{value}}</span>
+                      </p>
+                    </div>
+                  </Tooltip>
+                </li>
+                <li>
+                  <InputNumber :max="goods.count" :min="1" v-model="goods.buyNum" />
+                </li>
+                <li>
+                  <a @click="() => handleByGoods(goods)">购买</a>
+                </li>
+              </template>
+            </ListItem>
+          </List>
+        </Panel>
+      </Collapse>
+      <Drawer v-if="!!temp" inner :title="temp.name" placement="left" :mask="false" :value="true" @on-close="temp = null" style="z-index: 99999">
+        <p
+          v-for="(value, key) in getEqsInfo(temp)"
+          :key="key"
+        >
+          <span :style="key | addStyle">{{key}}:</span>
+          <span :style="key | addStyle">{{value}}</span>
+        </p>
+      </Drawer>
+    </Modal>
+    <!-- 市场↑ -->
   </div>
-
 </template>
 
 <script>
@@ -916,14 +1008,15 @@ export default {
       game: {},
       user: null,
       config: configData,
-      hightcbtTaskId: "5f01ee501a863c76d650525c",
-      opened: false,
+      showBag: false,
       showGains: false,
       showEqsInfo: false,
       showUserInfo: false,
       showMypets: false,
       showSkills: false,
       showTasks: false,
+      showMarket: false,
+      temp: null,
       fightGains: {
         goods: {}, //战利品
         gainExp: 0, //获得经验
@@ -946,7 +1039,7 @@ export default {
         {
           title: "column2",
           key: "column2",
-          width: 100,
+          width: 120,
           align: "center",
         },
         {
@@ -1019,12 +1112,7 @@ export default {
       const user = this.user;
       const maps = configData.maps;
       if (user && user.map) {
-        const { up, next } = maps.find((mp) => mp.id === user.map.id);
-        const toMaps = [...up, ...next].map((id) => {
-          const name = maps.find((mp) => mp.id === id).name;
-          return { id, name };
-        });
-        return toMaps;
+        return maps.filter((mp) => mp.id !== user.map.id);
       } else {
         return [];
       }
@@ -1054,13 +1142,6 @@ export default {
         high: unuse.find((usc) => usc.highcbt)
       };
       return unusecbt;
-    },
-    hightcbtTask() {
-      const userTasks = this.user.userTasks;
-      if (!userTasks) return null;
-      return this.user.userTasks.find(
-        (ust) => ust.task._id === this.hightcbtTaskId
-      );
     },
     //背包
     goods() {
@@ -1369,6 +1450,7 @@ export default {
       window.game = game;
 
       // 添加到用户列表
+      user.market = { type: '1' };
       this.user = user;
       // 暴露到全局
       window.user = user;
@@ -1501,12 +1583,12 @@ export default {
     },
     // 打开背包
     openBag() {
-      this.opened = !this.opened;
+      this.showBag = !this.showBag;
       this.readToUse = null;
       this.searchText = "";
       this.selectedGoods = [];
-      //更新背包状态为 true 且 opened 为true时 ，重置背包
-      if (this.user.updateGoods && this.opened) {
+      //更新背包状态为 true 且 showBag 为true时 ，重置背包
+      if (this.user.updateGoods && this.showBag) {
         this.user.updateGoods = false;
         this.user.goods = [];
         this.user.goodsPage = 1;
@@ -1516,6 +1598,7 @@ export default {
     // 使用物品
     async handleUseItem() {
       const { useNum, id, name } = this.readToUse;
+      if (!useNum || useNum < 0) return this.$Message.error('请输入正确的数量')
       window.freshPackage = false;
       this.$Spin.show({
         render: () => (
@@ -1549,12 +1632,22 @@ export default {
     // 分解物品
     handleSellItem() {
       const { useNum, id, name } = this.readToUse;
+      if (!useNum || useNum < 0) return this.$Message.error('请输入正确的数量')
       this.game.sellGoods([{ id, num: useNum }]);
+      this.readToUse = null;
+    },
+    // 上架市场
+    handleSellGoods () {
+      const { useNum, id, name, sellPrice } = this.readToUse;
+      if (!useNum || useNum < 0) return this.$Message.error('请输入正确的数量')
+      if (!sellPrice || sellPrice < 0) return this.$Message.error('请输入正确的总价')
+      this.game.playerSellGoods(id, sellPrice, useNum);
       this.readToUse = null;
     },
     //选择物品
     selectGood() {
       const { useNum, id } = this.readToUse;
+      if (!useNum || useNum < 0) return this.$Message.error('请输入正确的数量')
       const obj = this.selectedGoods.find((ele) => {
         const res = ele.id === id;
         if (res) {
@@ -1712,6 +1805,25 @@ export default {
         this.$Message.success(`正在切图去${map.name}`);
         this.game.moveToNewMap(map.id);
       }
+    },
+    handleByGoods (gds) {
+      const num = gds.buyNum || 1;
+      const name = gds.name || gds.goods.name;
+      if (num == gds.count) {
+        this.game.byPalyerGoods(gds._id, 2);
+
+        const gdsList = user.market.sellGoods.find(sg => sg.name === name).list;
+        const index = gdsList.findIndex(gl => gl._id === gds._id);
+        gdsList.splice(index, 1);
+      } else {
+        for (let i = 0; i < num; i++) {
+          gds.count--;
+          this.game.byPalyerGoods(gds._id, 1);
+        }
+      }
+      this.user.updateGoods = true;
+      this.$forceUpdate();
+      this.$Message.success(`购买${name}${num}个完成`);
     }
   }
 };
