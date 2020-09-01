@@ -15,6 +15,12 @@
         <Button type="primary" size="small" @click="handleLogin">添加账号</Button>
       </FormItem>
       <FormItem>
+        <Button type="primary" size="small" @click="showSkillMap = true">技能图鉴</Button>
+      </FormItem>
+      <FormItem>
+        <Button type="primary" size="small" @click="showMonsterMap = true">怪物图鉴</Button>
+      </FormItem>
+      <FormItem>
         <Input type="password" v-model="SCKEY" @on-change="handleSCKEYChange" placeholder="serverChan SCKEY" />
       </FormItem>
       <FormItem>
@@ -71,6 +77,51 @@
       </Tag>
     </div>
     <iframe :src="serverChanUrl" v-if="serverChanUrl" @onload="serverChanUrl = null" style="display:none;"/>
+    <Drawer
+      v-model="showSkillMap"
+      :mask="false"
+      width="500px"
+      title="宠物技能图鉴"
+    >
+      <Alert
+        v-for="(value,key) in skillMap"
+        :key="key"
+        style="margin-bottom: 8px;"
+      >
+        {{key}}
+        【{{value}}】
+      </Alert>
+    </Drawer>
+    <Modal
+      v-model="showMonsterMap"
+      fullscreen
+      footer-hide
+      title="宠物图鉴"
+    >
+      <Card
+        v-for="monster in monsterMap"
+        :key="monster._id"
+        style="margin: 0 8px 8px 0;display:inline-block;width: 250px;vertical-align: top;"
+        :title="monster.name"
+      >
+        <p>成长：{{monster.growing_num}}</p>
+        <p>品质：{{rareType[monster.type]}}</p>
+        <p>躲避资质：{{monster.dodge_zz}}</p>
+        <p>攻击资质：{{monster.str_zz}}</p>
+        <p>法力资质：{{monster.int_zz}}</p>
+        <p>体力资质：{{monster.con_zz}}</p>
+        <p>防御资质：{{monster.vit_zz}}</p>
+        <p>速度资质：{{monster.speed_zz}}</p>
+        <p>躲避资质：{{monster.dodge_zz}}</p>
+        <p>携带技能：</p>
+        <template v-if="monster.skill">
+          <Tag v-for="skill in monster.skill" :key="`${monster._id}${skill._id}`" type="border">
+            {{skill.name}}
+          </Tag>
+        </template>
+        <p v-else>没技能</p>
+      </Card>
+    </Modal>
   </div>
 </template>
 
@@ -95,7 +146,12 @@ export default {
       sendMsg: '',
       dmline: 0,
       SCKEY: localStorage.getItem('sckey'),
-      serverChanUrl: null
+      serverChanUrl: null,
+      showSkillMap: false,
+      skillMap: {},
+      showMonsterMap: false,
+      monsterMap: [],
+      rareType: ["普通", "稀有", "传说", "PY"]
     }
   },
   watch: {
@@ -139,6 +195,17 @@ export default {
       if (emptyTeamUser.length === 0) return
       this.serverChanUrl = `https://sc.ftqq.com/${this.SCKEY}.send?text=来自夏影的温馨提醒&desp=你的这些账号[${emptyTeamUser.join('，')}]已经不在队伍里面，我怀疑已经掉线了`
     }, 310000);
+
+    const mdata = window.monsterData.data;
+    const skillMap = {};
+    console.log(mdata)
+    mdata.map(md => {
+      md.skill && md.skill.map(sk => {
+        skillMap[sk.name] = sk.info;
+      });
+    });
+    this.skillMap = skillMap;
+    this.monsterMap = mdata;
   },
   methods: {
     handleDMflag (flag) {
