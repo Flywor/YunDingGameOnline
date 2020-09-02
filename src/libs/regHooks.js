@@ -294,7 +294,7 @@ export default function (_app) {
         }
 
         // 保存战斗消息
-        app.$set(user, 'message', data.data);
+        app.setMessage(this.email, data.data);
         this.userInfo();
     }
     onRoundBatEndCb.hookMark = "regHooks.onRoundBatEndCb";
