@@ -127,7 +127,7 @@ export default function (_app) {
         app.$delete(app.user, 'team');
         app.$Message.info('已离开队伍');
 
-        app.game.getTeamList(app.user.map.id)
+        this.getTeamList(app.user.map.id)
     }
     leaveTeamCb.hookMark = "regHooks.leaveTeamCb";
     GameApi.regHookHandlers['connector.teamHandler.leaveTeam'].push(leaveTeamCb);
@@ -241,7 +241,7 @@ export default function (_app) {
         }
 
         app.$Message.success("切换副本成功");
-        app.game.getTeamList(app.user.map.id)
+        this.getTeamList(app.user.map.id)
     }
     switchCombatScreenCb.hookMark = "regHooks.switchCombatScreenCb";
     GameApi.regHookHandlers['connector.teamHandler.switchCombatScreen'].push(switchCombatScreenCb);
@@ -294,7 +294,7 @@ export default function (_app) {
         }
 
         // 保存战斗消息
-        app.setMessage(this.email, data.data);
+        app.$set(user, 'message', data.data);
         this.userInfo();
     }
     onRoundBatEndCb.hookMark = "regHooks.onRoundBatEndCb";

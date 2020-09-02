@@ -97,6 +97,7 @@
       fullscreen
       footer-hide
       title="宠物图鉴"
+      @on-visible-change="flag => flag || (monsterMap = [])"
     >
       <Form ref="formInline" inline>
         <FormItem>
@@ -241,27 +242,27 @@ export default {
       this.$refs['userFrame'][0].contentWindow.game.subSystemMsg(flag ? 1: 0);
     },
     handleSCKEYChange () {
-      localStorage.setItem('sckey', this.SCKEY)
+      localStorage.setItem('sckey', this.SCKEY);
     },
     frameLoad (index) {
       if (index != 0) return;
-      this.msgList = this.$refs['userFrame'][0].contentWindow.chatMsg
-      this.openDm = false
+      this.msgList = this.$refs['userFrame'][0].contentWindow.chatMsg;
+      this.openDm = false;
     },
     getDmColor (msg) {
       // 回收弹幕
       setTimeout(() => {
-        const dmindex = this.msgDm.findIndex(m => m.key == msg.key)
-        this.msgDm.splice(dmindex, 1)
-      }, 20000)
+        const dmindex = this.msgDm.findIndex(m => m.key == msg.key);
+        this.msgDm.splice(dmindex, 1);
+      }, 20000);
       if (msg.channel == 0) {
-        return 'volcano'
+        return 'volcano';
       }
-      return msg.nickname == this.userList[0].email ? 'primary': 'success'
+      return msg.nickname == this.userList[0].email ? 'primary': 'success';
     },
     handleSendChat () {
-      this.$refs['userFrame'][0].contentWindow.game.chatSend(this.sendMsg)
-      this.sendMsg = ''
+      this.$refs['userFrame'][0].contentWindow.game.chatSend(this.sendMsg);
+      this.sendMsg = '';
     },
     async handleLogin () {
       const formInline = this.formInline;
@@ -269,7 +270,7 @@ export default {
         this.$Message.error('账号密码没填好');
         return;
       }
-      this.onAddUser(formInline.user, formInline.password)
+      this.onAddUser(formInline.user, formInline.password);
     },
     /**
      * 将账号密码保存到 localStorage 中
@@ -280,7 +281,7 @@ export default {
         let users = this.getStorageUser();
         if ('undefined' == typeof password) {
             delete users[email];
-            localStorage.removeItem(email)
+            localStorage.removeItem(email);
         } else {
             users[email] = password;
         }
@@ -302,18 +303,18 @@ export default {
       // 保存账号密码
       this.saveStorageUser(email, passwd);
       // 添加进去
-      this.userList.push({ email, isLogin: true, password: passwd })
+      this.userList.push({ email, isLogin: true, password: passwd });
     },
     handleReload (index) {
-      this.$refs['userFrame'][index].contentWindow.location.reload()
+      this.$refs['userFrame'][index].contentWindow.location.reload();
     },
     /**
       * 删除用户
       * @param {*} row
       */
     deleteUser: function (email) {
-      const user = this.userList.find(ul => ul.email === email)
-      const index = this.userList.indexOf(user)
+      const user = this.userList.find(ul => ul.email === email);
+      const index = this.userList.indexOf(user);
       // 从列表删除此用户
       this.userList.splice(index, 1);
 
@@ -323,7 +324,6 @@ export default {
     handlerSearchMonster () {
       const mdata = window.monsterData.data;
       const { skills, rare } = this.monsterSearch;
-      console.log(skills, rare)
       this.monsterMap = mdata.filter(d => {
         let flag = true;
         if (rare && rare.length > 0) {
@@ -331,12 +331,12 @@ export default {
         }
         if (flag && skills && skills.length > 0) {
           if (d.skill) {
-            flag = d.skill.some(skl => skills.includes(skl.name))
+            flag = d.skill.some(skl => skills.includes(skl.name));
           } else {
-            flag = false
+            flag = false;
           }
         }
-        return flag
+        return flag;
       });
     }
   }

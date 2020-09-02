@@ -9,21 +9,33 @@
         <Button
           size="small"
           type="info"
-          @click="showEqsInfo = true"
+          @click="() => {
+            modalTitle = '装备信息';
+            modalType = 'eqs';
+            showModal = true;
+          }"
         >
           装备
         </Button>
         <Button
           size="small"
           type="info"
-          @click="showUserInfo = true"
+          @click="() => {
+            modalTitle = '人物属性';
+            modalType = 'userinfo';
+            showModal = true;
+          }"
         >
           属性
         </Button>
         <Button
           size="small"
           type="info"
-          @click="showGains = true"
+          @click="() => {
+            modalTitle = '战斗收益';
+            modalType = 'gains';
+            showModal = true;
+          }"
         >
           收益
         </Button>
@@ -31,24 +43,37 @@
           size="small"
           type="info"
           @click="() => {
-            game.getMyPet();
-            showMypets = true;
+            modalTitle = '宠物信息';
+            modalType = 'pet';
+            showModal = true;
           }"
         >宠物</Button>
         <Button
           size="small"
           type="info"
-          @click="showSkills=true"
+          @click="() => {
+            modalTitle = '人物技能';
+            modalType = 'skills';
+            showModal = true;
+          }"
         >技能</Button>
         <Button
           size="small"
           type="info"
-          @click="showTasks=true"
+          @click="() => {
+            modalTitle = '任务中心';
+            modalType = 'tasks';
+            showModal = true;
+          }"
         >任务</Button>
         <Button
           size="small"
           type="info"
-          @click="showMarket = true"
+          @click="() => {
+            modalTitle = '市场';
+            modalType = 'market';
+            showModal = true;
+          }"
         >市场</Button>
       </ButtonGroup>
     </p>
@@ -99,7 +124,11 @@
         <Button
           size="small"
           type="info"
-          @click="openBag"
+          @click="() => {
+            modalTitle = '储物戒指';
+            modalType = 'bag';
+            showModal = true;
+          }"
         >
           储物戒指
         </Button>
@@ -388,610 +417,65 @@
       />
     </div>
     <!-- 战斗信息 ↑ -->
-    <!-- 背包↓ -->
+    <!-- 综合弹窗 ↓ -->
     <Modal
-      v-model="showBag"
+      v-model="showModal"
       fullscreen
       footer-hide
+      :title="modalTitle"
     >
-      <div
-        slot="header"
-        class="good-header"
-      >
-        <span>储物戒指</span>
-        <Input
-          v-model="searchText"
-          suffix="ios-search"
-          placeholder="名称、说明、属性值"
-          style="width: 66%"
-        />
-      </div>
-      <div class="goods-box">
-        <Badge
-          :count="item.selected"
-          overflow-count="999"
-          v-for="item in goods"
-          :key="item.id"
-        >
-          <Button
-            size="small"
-            class="good-name"
-            :style="item.style"
-            @click="goodsHandle(item)"
-          >
-            <label v-html="item.name"></label>({{item.num}})
-          </Button>
-        </Badge>
-      </div>
-      <div class="good-info">
-        <p v-if="!readToUse">
-          去上面点一个物品
-        </p>
+      <template v-if="'gains' === modalType">
+        <div v-if="!fightGains.beginTime">
+          {{gains.tips}}
+        </div>
         <template v-else>
-          <div class="info-box">
-            <div class="basci-info">
-              <span :style="readToUse.style">
-                {{readToUse.name}}
-              </span>
-              <span :style="readToUse.style">价格：{{readToUse.price}}</span>
-              <span :style="readToUse.style">{{readToUse.info}}</span>
-            </div>
-            <template v-if="readToUse.eq_info">
-              <div class="eq-info">
-                <span
-                  :style="readToUse.style"
-                  v-for="(value,key) in readToUse.eq_info"
-                  :key="key"
-                >
-                  <span :style="key | addStyle">{{key}}:</span>
-                  <span :style="key | addStyle">{{value}}</span>
-                </span>
-              </div>
-            </template>
-          </div>
-          <div class="button-box">
-            <Input v-model="readToUse.useNum" type="number">
-              <span slot="prepend">数量</span>
-            </Input>
-            <Input v-model="readToUse.sellPrice" type="number">
-              <span slot="prepend">总价</span>
-            </Input>
-            <ButtonGroup
-              size="small"
-              vertical
-            >
-              <Button
-                size="small"
-                type="primary"
-                @click="selectGood"
-              >
-                标记
-              </Button>
-              <Button
-                v-if="['可装备的装备'].includes(readToUse.goodsType)"
-                size="small"
-                type="primary"
-                @click="handleWearItem"
-              >
-                装备
-              </Button>
-              <Button
-                v-if="['未鉴定的装备', '藏宝图', '技能书', '蛋', '大补丹'].includes(readToUse.goodsType)"
-                size="small"
-                type="primary"
-                @click="handleUseItem"
-              >
-                使用
-              </Button>
-              <Button
-                size="small"
-                type="primary"
-                @click="handleSellGoods"
-              >
-                出售
-              </Button>
-              <Button
-                v-if='selectedGoods.length > 1'
-                size="small"
-                type="primary"
-                @click="makeGoods"
-              >
-                合成
-              </Button>
-              <Button
-                size="small"
-                type="primary"
-                @click="handleSellItem"
-              >
-                分解
-              </Button>
-            </ButtonGroup>
-          </div>
+          <CellGroup>
+            <Cell
+              title="开始时间"
+              :extra="`${gains.beginTime}`"
+            />
+            <Cell
+              title="战斗时长"
+              :extra="`${gains.fightTime}`"
+            />
+            <Cell
+              title="获得经验"
+              :extra="`${gains.gainExp}`"
+            />
+            <Cell
+              title="战斗回合数"
+              :extra="`${gains.roundCount}`"
+            />
+            <Cell
+              title="战斗场数"
+              :extra="`${gains.fightCount}`"
+            />
+            <Cell
+              title="经验/分钟"
+              :extra="`${gains.avgExp}`"
+            />
+            <Cell
+              title="战斗场数/分钟"
+              :extra="`${gains.avgFightCount}`"
+            />
+            <Cell title="战利品" />
+          </CellGroup>
+          <Tag
+            v-for="(value,key) in gains.goods"
+            :key="key"
+            color="pink"
+          >{{key}}({{value}})</Tag>
         </template>
-      </div>
-    </Modal>
-    <!-- 背包↑ -->
-    <!-- 收益↓ -->
-    <Modal
-      v-model="showGains"
-      fullscreen
-      footer-hide
-      title="战斗收益"
-    >
-      <div v-if="!fightGains.beginTime">
-        {{gains.tips}}
-      </div>
-      <template v-else>
-        <CellGroup>
-          <Cell
-            title="开始时间"
-            :extra="`${gains.beginTime}`"
-          />
-          <Cell
-            title="战斗时长"
-            :extra="`${gains.fightTime}`"
-          />
-          <Cell
-            title="获得经验"
-            :extra="`${gains.gainExp}`"
-          />
-          <Cell
-            title="战斗回合数"
-            :extra="`${gains.roundCount}`"
-          />
-          <Cell
-            title="战斗场数"
-            :extra="`${gains.fightCount}`"
-          />
-          <Cell
-            title="经验/分钟"
-            :extra="`${gains.avgExp}`"
-          />
-          <Cell
-            title="战斗场数/分钟"
-            :extra="`${gains.avgFightCount}`"
-          />
-          <Cell title="战利品" />
-        </CellGroup>
-        <Tag
-          v-for="(value,key) in gains.goods"
-          :key="key"
-          color="pink"
-        >{{key}}({{value}})</Tag>
       </template>
+      <BagComponent v-else-if="'bag' === modalType"/>
+      <EqsComponent v-else-if="'eqs' === modalType"/>
+      <MarketComponent v-else-if="'market' === modalType"/>
+      <PetComponent v-else-if="'pet' === modalType"/>
+      <SkillsComponent v-else-if="'skills' === modalType"/>
+      <TasksComponent v-else-if="'tasks' === modalType"/>
+      <UserinfoComponent v-else-if="'userinfo' === modalType"/>
     </Modal>
-    <!-- 收益↑ -->
-    <!-- 人物装备↓ -->
-    <Modal
-      v-model="showEqsInfo"
-      fullscreen
-      footer-hide
-      title="装备信息"
-    >
-      <Collapse simple>
-        <Panel
-          :name="index | getIndex"
-          v-for="(item,index) in eqsInfo"
-          :key="item.id"
-        > <img
-            :src="item.img"
-            class="eq-img"
-          >
-          <span :style="item.style">{{item.name}}</span>
-          <div slot="content">
-            <div
-              :style="`padding:2px;${item.style}`"
-              v-for="(value,key) in item.info"
-              :key="key"
-            >
-              <span :style="key | addStyle">{{key}}：</span>
-              <span :style="key | addStyle">{{value}}</span>
-            </div>
-          </div>
-
-        </Panel>
-      </Collapse>
-    </Modal>
-    <!-- 人物装备↑ -->
-    <!-- 人物属性↓ -->
-    <Modal
-      v-model="showUserInfo"
-      fullscreen
-      footer-hide
-      title="人物属性"
-    >
-      <CellGroup>
-        <Cell
-          v-for="(value, key) in userInfo"
-          :key="key"
-          :title="key"
-          :extra="`${value}`"
-        />
-      </CellGroup>
-    </Modal>
-    <!-- 人物属性↑ -->
-    <!-- 人物技能↓ -->
-    <Modal
-      v-model="showSkills"
-      fullscreen
-      footer-hide
-      title="人物技能"
-    >
-      <template v-if="user.arms">
-        <Tag v-for="arm in user.arms" :key="arm.name">
-          {{arm.name}}[{{arm.exp}}/{{arm.needExp}}]
-        </Tag>
-        <div class="br" />
-        <div class="br" />
-        <div class="br" />
-        <Input v-model="upSkillNum" type="number">
-          <Select transfer v-model="upSkillType" slot="prepend" style="width: 100px">
-            <Option :value="1">剑修</Option>
-            <Option :value="2">枪修</Option>
-            <Option :value="3">锤修</Option>
-            <Option :value="4">伞修</Option>
-          </Select>
-          <Button slot="append" type="primary" size="small" @click="handleFationSkill">确定</Button>
-        </Input>
-      </template>
-      <template v-if="user.skills">
-        <div v-for="skill in user.skills" :key="skill._id">
-          <div class="br" />
-          <div class="br" />
-          <div class="br" />
-          {{skill.name}}：
-          <ButtonGroup size="small">
-            <Button @click="() => game.upLevelUserSkill(1, skill._id)">
-              基础伤害{{skill.real_damage}}
-              <Icon type="md-arrow-round-up" />
-            </Button>
-            <Button @click="() => game.upLevelUserSkill(2, skill._id)">
-              属性波动【{{skill.min_hurt.toFixed(2)}} ~ {{skill.max_hurt.toFixed(2)}}】
-              <Icon type="md-arrow-round-up" />
-            </Button>
-            <Button @click="() => game.upLevelUserSkill(3, skill._id)">
-              作用单位【{{skill.unit}}】
-              <Icon type="md-arrow-round-up" />
-            </Button>
-          </ButtonGroup>
-        </div>
-      </template>
-    </Modal>
-    <!-- 人物技能↑ -->
-    <!-- 任务↓ -->
-    <Modal
-      v-model="showTasks"
-      fullscreen
-      footer-hide
-      title="任务中心"
-    >
-      <List>
-        <ListItem v-for="task in user.userTasks" :key="task.utid">
-          <ListItemMeta
-            :description="`${task.info} - 所需物品：${task.need.join(',')}`"
-          >
-            <template slot="title">
-              <p v-html="`${task.title} - 奖励物品：${task.give.join(',')}`"></p>
-            </template>
-          </ListItemMeta>
-          <template slot="action">
-            <li>
-              <a @click="game.payUserTask(task.utid)">完成</a>
-            </li>
-          </template>
-        </ListItem>
-      </List>
-      <Divider orientation="left">系统任务</Divider>
-      <List>
-        <ListItem v-for="task in user.systemTask" :key="task._id">
-          <ListItemMeta
-            :description="`${task.info}`"
-          >
-            <template slot="title">
-              <p v-html="task.title"></p>
-            </template>
-          </ListItemMeta>
-          <template slot="action">
-            <li>
-              <a @click="game.getCopyTask(task._id)">领取</a>
-            </li>
-          </template>
-        </ListItem>
-      </List>
-    </Modal>
-    <!-- 任务↑ -->
-    <!-- 宠物信息↓ -->
-    <Modal
-      v-model="showMypets"
-      fullscreen
-      footer-hide
-      title="宠物信息"
-    >
-      <Tabs
-        v-model="tabPaneName"
-        size="small"
-      >
-        <TabPane
-          :label="item.name"
-          :name="`name${index+1}`"
-          v-for="(item, index) in petsInfo"
-          :key="item.id"
-        >
-          <Divider size="small">状态：{{item.status?'已参战':'休息中'}}</Divider>
-          <p
-            style="padding:5px"
-            v-if="item.skills.length === 0"
-          >
-            无技能
-          </p>
-          <Poptip
-            v-else
-            word-wrap
-            transfer
-            width="200"
-            trigger="hover"
-            v-for="(skill,index) in item.skills"
-            :key="index"
-            :content="skill.info"
-          >
-            <Button
-              :style="skill.style"
-              size="small"
-            >{{skill.name}}</Button>
-          </Poptip>
-
-          <Table
-            v-if="tabPaneName === `name${index+1}`"
-            :show-header="false"
-            :columns="columns"
-            :data="item.data"
-            border
-          ></Table>
-          <ButtonGroup
-            size="small"
-            shape="circle"
-            class="pet-btn"
-          >
-            <Button
-              size="small"
-              type="primary"
-              @click="handlePet(item,3)"
-            >放生</Button>
-            <Button
-              size="small"
-              type="primary"
-              @click="handlePet(item,4)"
-            >幻化</Button>
-            <Button
-              size="small"
-              type="primary"
-              @click="handlePet(item,1)"
-            >升级</Button>
-            <Button
-              size="small"
-              type="primary"
-              @click="handlePet(item,2,1)"
-            >全力</Button>
-            <Button
-              size="small"
-              type="primary"
-              @click="handlePet(item,2,2)"
-            >全魔</Button>
-            <Button
-              size="small"
-              type="primary"
-              @click="handlePet(item,5)"
-            >{{item.status?"休息":"参战"}}</Button>
-            <Button
-              size="small"
-              type="primary"
-              @click="handlePet(item,8)"
-            >{{(item.bat_num && item.status)?"主":(item.status == 1 ? "副" : "")}}</Button>
-          </ButtonGroup>
-          <ButtonGroup
-            size="small"
-            shape="circle"
-            class="pet-btn"
-          >
-            <Button
-              size="small"
-              type="success"
-              @click="handlePet(item, 6)"
-            >合宠</Button>
-            <Button
-              size="small"
-              type="success"
-              @click="handlePet(item, 7)"
-            >打书</Button>
-          </ButtonGroup>
-        </TabPane>
-      </Tabs>
-    </Modal>
-    <!-- 宠物信息↑ -->
-    <!-- 防误操作modal -->
-    <Modal
-      v-model="modal"
-      :styles="{top: '85px'}"
-    >
-      <p
-        slot="header"
-        style="color:#f60;text-align:center"
-      >
-        <Icon type="ios-information-circle"></Icon>
-        <span>确定{{handleData.name}}？</span>
-      </p>
-      <div v-if="![5, 8].includes(handleData.type)" style="text-align:center">
-        <img
-          v-if="handleData.type<6"
-          src="https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1593343846064&di=97a86fe902b9754de368f02e336e4eab&imgtype=0&src=http%3A%2F%2Fwww.11xzb.com%2Fd%2Ffile%2Fmoban5%2F201909020832%2F1567158444899421.png"
-          alt=""
-          style="width:120px;padding-top:5px"
-        >
-        <!-- 合宠 -->
-        <div
-          v-else-if="handleData.type===6"
-          class="slelect-box"
-        >
-          <Select
-            v-model="pet1"
-            size="small"
-          >
-            <Option
-              v-for="item in petList"
-              :disabled="[item.status,item.value,pet2] | disabled"
-              :value="item.value"
-              :key="item.value"
-            >{{ item.label }}</Option>
-          </Select>
-          <p>技能：{{selectPet1}}</p>
-          <Select
-            v-model="pet2"
-            size="small"
-          >
-            <Option
-              v-for="item in petList"
-              :disabled="[item.status,item.value,pet1] | disabled"
-              :value="item.value"
-              :key="item.value"
-            >{{ item.label }}</Option>
-          </Select>
-          <p>技能：{{selectPet2}}</p>
-        </div>
-        <!-- 打书 -->
-        <div
-          v-else
-          class="slelect-box"
-        >
-          <Select
-            v-model="pet1"
-            size="small"
-          >
-            <Option
-              v-for="item in petList"
-              :disabled="[item.status,item.value,pet2] | disabled"
-              :value="item.value"
-              :key="item.value"
-            >{{ item.label }}</Option>
-          </Select>
-          <p>技能：{{selectPet1}}</p>
-          <Select
-            v-model="pet2"
-            size="small"
-          >
-            <Option
-              v-for="item in bookList"
-              :value="item.value"
-              :key="item.value"
-            >{{ item.label }}</Option>
-          </Select>
-        </div>
-
-        <p v-if='handleData.type === 1'>点击确认继续升级，或者点击取消关闭面板</p>
-        <p v-if='handleData.type === 3 && handleData.data.status===1'>宠物正在参战...</p>
-
-      </div>
-
-      <div
-        slot="footer"
-        style="text-align:center"
-      >
-        <Button
-          size="small"
-          @click="modal=false"
-        >取消</Button>
-        <Button
-          type="primary"
-          size="small"
-          :disabled="handleData.type === 3 && handleData.data.status===1"
-          @click="confirmHandle"
-        >确认</Button>
-      </div>
-    </Modal>
-    <!-- 市场↓ -->
-    <Modal
-      v-model="showMarket"
-      fullscreen
-      footer-hide
-      title="市场"
-    >
-      <Form ref="formInline" inline>
-        <FormItem>
-          <Select v-model="user.market.type">
-            <Option value="1">装备</option>
-            <Option value="2">材料</option>
-            <Option value="3">技能书</option>
-            <Option value="4">制造类</option>
-            <Option value="5">宠物蛋</option>
-            <Option value="6">珍稀物品</option>
-            <Option value="7">法宝材料</option>
-            <Option value="8">低级兽决</option>
-            <Option value="9">高级兽决</option>
-          </Select>
-        </FormItem>
-        <FormItem>
-          <Input type="text" v-model="user.market.keyword" placeholder="物品名称" />
-        </FormItem>
-        <FormItem>
-          <Button type="primary" @click="() => {
-            $Spin.show();
-            user.market.pageIndex = 1;
-            user.market.list = [];
-            game.getPlayerSellGoods(user.market.pageIndex, user.market.type);
-          }">搜索</Button>
-        </FormItem>
-      </Form>
-      <Collapse>
-        <Panel
-          v-for="item in user.market.sellGoods"
-          :key="item.name"
-          :name="item.name"
-        >
-          {{item.name}} - {{item.count}}在售
-          <List slot="content" border size="small">
-            <ListItem
-              v-for="goods in item.list"
-              :key="goods._id"
-            >
-              <ListItemMeta
-                :description="`${(goods.sell_game_gold/goods.count).toFixed(0)}仙石/个，共${goods.count}个【卖家：${goods.user.nickname}】`"
-              />
-              <template slot="action">
-                <li v-if="user.market.type == '1'">
-                  <Tooltip>
-                    <a>属性</a>
-                    <div slot="content">
-                      <p
-                        v-for="(value, key) in getEqsInfo(goods)"
-                        :key="key"
-                      >
-                        <span :style="key | addStyle">{{key}}:</span>
-                        <span :style="key | addStyle">{{value}}</span>
-                      </p>
-                    </div>
-                  </Tooltip>
-                </li>
-                <li>
-                  <InputNumber :max="goods.count" :min="1" v-model="goods.buyNum" />
-                </li>
-                <li>
-                  <a @click="() => handleByGoods(goods)">购买</a>
-                </li>
-              </template>
-            </ListItem>
-          </List>
-        </Panel>
-      </Collapse>
-      <Drawer v-if="!!temp" inner :title="temp.name" placement="left" :mask="false" :value="true" @on-close="temp = null" style="z-index: 99999">
-        <p
-          v-for="(value, key) in getEqsInfo(temp)"
-          :key="key"
-        >
-          <span :style="key | addStyle">{{key}}:</span>
-          <span :style="key | addStyle">{{value}}</span>
-        </p>
-      </Drawer>
-    </Modal>
-    <!-- 市场↑ -->
+    <!-- 综合弹窗 ↑ -->
   </div>
 </template>
 
@@ -1001,22 +485,24 @@ import GameApi from "@libs/YunDingOnlineSDK.js";
 import regHooks from "@libs/regHooks.js";
 import configData from "@/config.js";
 import { sleep, findMapPath } from "@libs/tools";
+import BagComponent from '@components/bag.vue';
+import EqsComponent from '@components/eqs.vue';
+import MarketComponent from '@components/market.vue';
+import PetComponent from '@components/pet.vue';
+import SkillsComponent from '@components/skills.vue';
+import TasksComponent from '@components/tasks.vue';
+import UserinfoComponent from '@components/userinfo.vue';
 export default {
   name: "User",
+  components: { BagComponent, EqsComponent, MarketComponent, PetComponent, SkillsComponent, TasksComponent, UserinfoComponent },
   data() {
     return {
       game: {},
       user: null,
       config: configData,
-      showBag: false,
-      showGains: false,
-      showEqsInfo: false,
-      showUserInfo: false,
-      showMypets: false,
-      showSkills: false,
-      showTasks: false,
-      showMarket: false,
-      temp: null,
+      showModal: false,
+      modalTitle: '',
+      modalType: '',
       fightGains: {
         goods: {}, //战利品
         gainExp: 0, //获得经验
@@ -1024,35 +510,6 @@ export default {
         roundCount: 0, //回合数
         fightCount: 0, //战斗场数
       },
-      upSkillNum: 50,
-      upSkillType: 1,
-      readToUse: null,
-      searchText: "",
-      selectedGoods: [],
-      tabPaneName: "name1",
-      columns: [
-        {
-          title: "column1",
-          key: "column1",
-          align: "center",
-        },
-        {
-          title: "column2",
-          key: "column2",
-          width: 120,
-          align: "center",
-        },
-        {
-          title: "column3",
-          key: "column3",
-          width: 80,
-          align: "center",
-        },
-      ],
-      modal: false,
-      handleData: {},
-      pet1: "",
-      pet2: "",
       monsterList: JSON.parse(localStorage.getItem('monsterList') || '[]'), // 怪物列表
     };
   },
@@ -1084,28 +541,6 @@ export default {
         localStorage.setItem('monsterList', JSON.stringify(list))
       }
     }
-  },
-  filters: {
-    addStyle(val) {
-      const arr1 = ["体质", "魔力", "力量", "耐力", "敏捷"];
-      const arr2 = ["物理暴击", "法术暴击", "特技"];
-
-      if (arr1.includes(val)) {
-        return "color:green;font-weight: 600;";
-      }
-      if (arr2.includes(val)) {
-        return "color:orchid;";
-      }
-      return "";
-    },
-    getIndex(val) {
-      const index = val + 1;
-      return index.toString();
-    },
-    //参战宠物和重复不能选
-    disabled(val) {
-      return val[0] ? true : false || val[1] === val[2];
-    },
   },
   computed: {
     toMap() {
@@ -1143,56 +578,6 @@ export default {
       };
       return unusecbt;
     },
-    //背包
-    goods() {
-      let arr = [];
-      if (this.user.goods) {
-        this.user.goods.forEach((ele) => {
-          const { name, num, id } = ele;
-          const price_type = [null, "灵石", "仙石"];
-          const price = ele.info.price_type
-            ? `${ele.info.price / ele.info.price_type}${
-                price_type[ele.info.price_type]
-              }`
-            : null; //价格
-          const info = ele.info.info; //描述
-          const style = ele.info.style; //文字样式
-          const goodsType = ele.goodsType; //文字样式
-          const selected = this.selectedGoods.find(
-            (item) => item.id === ele.id
-          );
-
-          let obj = {
-            name,
-            num,
-            id,
-            price,
-            info,
-            style,
-            goodsType,
-            selected: selected ? selected.num : 0,
-          };
-          if (ele.goodsType === "可装备的装备") {
-            const eq_info = this.getEqsInfo(ele.info);
-            obj.eq_info = eq_info;
-          }
-          arr.push(obj);
-        });
-      }
-
-      if (this.searchText) {
-        const list = arr.filter((ele) => {
-          let str = `${ele.name}${ele.info}`;
-          if (ele.eq_info) {
-            str += JSON.stringify(ele.eq_info);
-          }
-          return str.includes(this.searchText);
-        });
-        return list;
-      }
-
-      return arr;
-    },
     gains() {
       //战斗时长 s
       const endTime = Date.now();
@@ -1205,9 +590,7 @@ export default {
       const fightTime = `${h}小时${m}分${s}秒`;
 
       const avgExp = Math.floor((this.fightGains.gainExp / time) * 60);
-      const avgFightCount = ((this.fightGains.fightCount / time) * 60).toFixed(
-        1
-      );
+      const avgFightCount = ((this.fightGains.fightCount / time) * 60).toFixed(1);
       return {
         goods: this.fightGains.goods, //战利品
         gainExp: this.fightGains.gainExp, //获得经验
@@ -1223,159 +606,7 @@ export default {
 
         tips: "暂无收益，请开启战斗",
       };
-    },
-    eqsInfo() {
-      let arr = [];
-      this.user.userEqs &&
-        this.user.userEqs.forEach((ele) => {
-          const obj = this.getEqsInfo(ele);
-          const { name, style, img } = ele;
-          arr.push({
-            name,
-            style,
-            img,
-            info: obj,
-          });
-        });
-      return arr;
-    },
-    userInfo() {
-      const obj = this.user.myInfo;
-      let info = {};
-      if (obj) {
-        info = {
-          等级: obj.level,
-          经验: Math.round(obj.exp),
-          气血: obj.hp_cap,
-          魔法: obj.mp,
-          命中: obj.hit,
-          物理伤害: obj.physical_damage,
-          物理防御: obj.physical_defense,
-          魔法伤害: obj.magic_damage,
-          魔法防御: obj.magic_defense,
-          治疗能力: obj.restore_damage,
-          速度: obj.speed,
-          物理暴击: obj.physical_crit,
-          法术暴击: obj.magic_crit,
-          体质: obj.con,
-          魔力: obj.int,
-          力量: obj.str,
-          耐力: obj.vit,
-          敏捷: obj.agi,
-          潜力: obj.potential_num,
-          躲避: obj.dodge,
-          活力: Math.round(obj.vitality_num),
-          气血储备: Math.round(obj.hp_store),
-          魔法储备: Math.round(obj.mp_store),
-          宝宝经验: Math.round(obj.pet_exp),
-        };
-      }
-
-      return info;
-    },
-    petsInfo() {
-      const arr = this.user.myPets;
-      let pets = [];
-      const type = ["普通", "稀有", "传说", "PY"];
-      arr &&
-        arr.forEach((ele) => {
-          const { skill, _id, name, status, bat_num } = ele;
-          const data = [
-            {
-              column1: `等级：${ele.level}`,
-              column2: `类型：${type[ele.type]}`,
-              column3: `成长：${ele.growing_num.toFixed(2)}`,
-            },
-            {
-              column1: `气血：${Math.round(ele.hp)}`,
-              column2: `魔法：${Math.round(ele.mp)}`,
-              column3: `命中：${Math.round(ele.hit)}`,
-            },
-            {
-              column1: `攻击资质：${ele.str_zz}`,
-              column2: `物理伤害：${Math.round(ele.physical_damage)}`,
-              column3: `力量：${ele.str}`,
-            },
-            {
-              column1: `法力资质：${ele.int_zz}`,
-              column2: `魔法伤害：${Math.round(ele.magic_damage)}`,
-              column3: `魔力：${ele.int}`,
-            },
-            // {
-            //   column1: `体力资质：${ele.con_zz}`,
-            //   column2: `魔法防御：${Math.round(ele.magic_defense)}`,
-            //   column3: `体质：${ele.con}`,
-            // },
-            // {
-            //   column1: `防御资质：${ele.vit_zz}`,
-            //   column2: `物理防御：${Math.round(ele.physical_defense)}`,
-            //   column3: `耐力：${ele.vit}`,
-            // },
-
-            // {
-            //   column1: `速资质度：${ele.speed_zz}`,
-            //   column2: `速度：${Math.round(ele.speed)}`,
-            //   column3: `敏捷：${ele.agi}`,
-            // },
-            // {
-            //   column1: `躲避质度：${ele.dodge_zz}`,
-            //   column2: `躲避：${Math.round(ele.dodge)}`,
-            //   column3: `潜力：${ele.potential_num}`,
-            // },
-          ];
-          let skills = [];
-          skill.forEach((item) => {
-            skills.push({
-              name: item.name,
-              info: item.info,
-              style: item.high ? "margin:5px;color:orchid" : "margin:5px;",
-            });
-          });
-          const point = ele.potential_num;
-          const obj = { _id, skills, name, data, status, point, bat_num };
-          pets.push(obj);
-        });
-      return pets;
-    },
-    petList() {
-      const options = [];
-      this.petsInfo.forEach((ele) => {
-        let skills = [];
-        ele.skills.forEach((item) => {
-          skills.push(item.name);
-        });
-        options.push({
-          value: ele._id,
-          label: `${ele.name} ， ${ele.data[0].column3}`,
-          skills,
-          status: ele.status,
-        });
-      });
-      return options;
-    },
-    selectPet1() {
-      const pet = this.petList.find((ele) => this.pet1 === ele.value) || {
-        skills: [],
-      };
-      return pet.skills.join("，") || "无";
-    },
-    selectPet2() {
-      const pet = this.petList.find((ele) => this.pet2 === ele.value) || {
-        skills: [],
-      };
-      return pet.skills.join(",") || "无";
-    },
-    bookList() {
-      const options = [];
-      this.goods.forEach((ele) => {
-        ele.goodsType === "兽决" &&
-          options.push({
-            value: ele.id,
-            label: ele.name,
-          });
-      });
-      return options;
-    },
+    }
   },
   mounted() {
     regHooks(this);
@@ -1470,11 +701,6 @@ export default {
         if (ra.a_skill_type === 1) {
           if (ra.mark.indexOf('成功') > 1) {
             this.game.getMyPet();
-            this.petsInfo.map(pet => {
-              if (this.user.discardPet.find(dp => pet.name.indexOf(dp) > -1)) {
-                this.game.upUserPetLevel(pet._id, 3, 0);
-              }
-            });
           }
           return ra.mark;
         }
@@ -1526,6 +752,7 @@ export default {
 
       this.$set(this.user, "message", data);
     },
+    // 加点
     handleAllocationPoint(type) {
       const pointNum = this.user.myInfo.potential_num;
       // 全力
@@ -1536,30 +763,6 @@ export default {
       if (type === 2) {
         this.game.allocationPoint(0, pointNum, 0, 0, 0);
       }
-    },
-    async handleFationSkill(type) {
-      if (this.upSkillNum <= 0) {
-        this.$Message.error('大胸弟，别搞事情');
-        return;
-      }
-      if (this.upSkillNum * 20000 > this.user.myInfo.game_silver) {
-        this.$Message.error('大胸弟，你钱不够啊');
-        return;
-      }
-      this.$Spin.show({
-        render: () => (
-          <p>
-            正在自动连点技能，为避免请求次数过多和程序错乱，在此窗口关闭后再进行其他操作
-          </p>
-        ),
-      });
-      for (let i = 0; i < this.upSkillNum; i++) {
-        this.game.repairUserArms(this.upSkillType);
-        await sleep(100);
-      }
-      this.game.userInfo();
-      this.game.getMySkill();
-      this.$Spin.hide();
     },
     getDateTime() {
       let date = new Date();
@@ -1580,183 +783,6 @@ export default {
         }
         return str.toString().padStart(2, "0");
       });
-    },
-    // 打开背包
-    openBag() {
-      this.showBag = !this.showBag;
-      this.readToUse = null;
-      this.searchText = "";
-      this.selectedGoods = [];
-      //更新背包状态为 true 且 showBag 为true时 ，重置背包
-      if (this.user.updateGoods && this.showBag) {
-        this.user.updateGoods = false;
-        this.user.goods = [];
-        this.user.goodsPage = 1;
-        this.game.getMyGoods();
-      }
-    },
-    // 使用物品
-    async handleUseItem() {
-      const { useNum, id, name } = this.readToUse;
-      if (!useNum || useNum < 0) return this.$Message.error('请输入正确的数量')
-      window.freshPackage = false;
-      this.$Spin.show({
-        render: () => (
-          <p>
-            正在连续使用物品{name}
-            {useNum}
-            个，为避免请求次数过多和程序错乱，在此窗口关闭后再进行其他操作
-          </p>
-        ),
-      });
-      for (let i = 0; i < useNum; i++) {
-        this.game.useGoods(id);
-        await sleep(1100);
-      }
-      window.freshPackage = true;
-      this.game.userInfo();
-      // 重置背包
-      this.user.goods = [];
-      this.user.goodsPage = 1;
-      this.game.getMyGoods();
-      //重置宠物信息
-      name.includes("蛋") && this.game.getMyPet();
-      this.readToUse = null;
-      this.$Spin.hide();
-    },
-    // 装备物品
-    handleWearItem() {
-      const { id } = this.readToUse;
-      this.game.wearUserEquipment(id);
-    },
-    // 分解物品
-    handleSellItem() {
-      const { useNum, id, name } = this.readToUse;
-      if (!useNum || useNum < 0) return this.$Message.error('请输入正确的数量')
-      this.game.sellGoods([{ id, num: useNum }]);
-      this.readToUse = null;
-    },
-    // 上架市场
-    handleSellGoods () {
-      const { useNum, id, name, sellPrice } = this.readToUse;
-      if (!useNum || useNum < 0) return this.$Message.error('请输入正确的数量')
-      if (!sellPrice || sellPrice < 0) return this.$Message.error('请输入正确的总价')
-      this.game.playerSellGoods(id, sellPrice, useNum);
-      this.readToUse = null;
-    },
-    //选择物品
-    selectGood() {
-      const { useNum, id } = this.readToUse;
-      if (!useNum || useNum < 0) return this.$Message.error('请输入正确的数量')
-      const obj = this.selectedGoods.find((ele) => {
-        const res = ele.id === id;
-        if (res) {
-          ele.num = useNum;
-        }
-        return res;
-      });
-      if (!obj) {
-        this.selectedGoods.push({ id, num: useNum });
-      }
-    },
-    //合成物品
-    makeGoods() {
-      this.game.makeGoods(this.selectedGoods);
-      this.selectedGoods = [];
-    },
-    //物品操作
-    goodsHandle(val) {
-      this.readToUse = val;
-      this.readToUse.useNum = 1;
-    },
-    //用于生成装备展示信息
-    getEqsInfo(obj) {
-      const eq_data = {
-        佩戴等级: obj.wear_level,
-        物理伤害: obj.physical_damage,
-        物理防御: obj.physical_defense,
-        魔法伤害: obj.magic_damage,
-        魔法防御: obj.magic_defense,
-        治疗能力: obj.restore_damage,
-        气血: obj.a,
-        速度: obj.speed,
-        体质: obj.con,
-        魔力: obj.int,
-        力量: obj.str,
-        耐力: obj.vit,
-        敏捷: obj.agi,
-        物理暴击: obj.physical_crit,
-        法术暴击: obj.magic_crit,
-        特技: obj.skill ? `${obj.skill.name}--${obj.skill.info}` : "",
-        评分: Math.round(obj.score),
-      };
-      let eq_info = {};
-      for (const key in eq_data) {
-        if (eq_data.hasOwnProperty(key)) {
-          const element = eq_data[key];
-          if (element) {
-            eq_info[key] = element;
-          }
-        }
-      }
-      return eq_info;
-    },
-    //宠物相关操作
-    handlePet(obj, type, point) {
-      const arr = ["升级", "加点", "放生", "幻化", "参战/休息", "合成", "打书", "主副战宠切换"];
-      const points = {
-        str: point === 1 ? obj.point : 0, // 力量
-        int: point === 2 ? obj.point : 0, // 智力
-        agi: 0, // 敏捷
-        vit: 0, // 耐力
-        con: 0, // 体质
-      };
-
-      this.modal = true;
-      this.handleData = {
-        type: type,
-        data: obj,
-        point: type === 2 ? points : null,
-        name: arr[type - 1],
-      };
-    },
-    confirmHandle() {
-      const data = this.handleData;
-
-      //升级，放生，加点
-      if (data.type < 4) {
-        this.game.upUserPetLevel(data.data._id, data.type, data.point);
-      }
-      //幻化
-      if (data.type === 4) {
-        this.game.turnIntoPet(data.data._id);
-        this.tabPaneName = "name1";
-      }
-      //参战 or 休息
-      if (data.type === 5) {
-        const status = data.data.status ? 0 : 1;
-        this.game.playUserPet(data.data._id, status);
-        this.tabPaneName = "name1";
-      }
-      //合宠
-      if (data.type === 6) {
-        this.game.fitPet(this.pet1, this.pet2);
-        this.tabPaneName = `name${this.petsInfo.length - 1}`;
-        this.pet1 = "";
-        this.pet2 = "";
-      }
-      if (data.type === 7) {
-        this.game.addUserPetSkill(this.pet2, this.pet1);
-        this.pet1 = "";
-        this.pet2 = "";
-      }
-      if (data.type === 8) {
-        this.game.playUserPet(data.data._id, 3);
-      }
-
-      if (data.type !== 1) {
-        this.modal = false;
-      }
     },
     async handleAutoWaBao () {
       if (this.user.team || this.user.fighting || this.user.message) {
@@ -1801,29 +827,10 @@ export default {
       const path = findMapPath(this.user.map.id, toid);
       for(let i = 0; i < path.length; i++) {
         const map = path[i];
-        await sleep(5000);
         this.$Message.success(`正在切图去${map.name}`);
         this.game.moveToNewMap(map.id);
+        await sleep(5000);
       }
-    },
-    handleByGoods (gds) {
-      const num = gds.buyNum || 1;
-      const name = gds.name || gds.goods.name;
-      if (num == gds.count) {
-        this.game.byPalyerGoods(gds._id, 2);
-
-        const gdsList = user.market.sellGoods.find(sg => sg.name === name).list;
-        const index = gdsList.findIndex(gl => gl._id === gds._id);
-        gdsList.splice(index, 1);
-      } else {
-        for (let i = 0; i < num; i++) {
-          gds.count--;
-          this.game.byPalyerGoods(gds._id, 1);
-        }
-      }
-      this.user.updateGoods = true;
-      this.$forceUpdate();
-      this.$Message.success(`购买${name}${num}个完成`);
     }
   }
 };
@@ -1873,62 +880,6 @@ export default {
   padding: 0 !important;
 }
 
-.good-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-right: 32px;
-  .ivu-input-with-suffix {
-    font-size: 12px;
-  }
-}
-.good-info {
-  box-shadow: 0 3px 10px;
-  font-size: 12px;
-  background: #fff;
-  opacity: 0.9;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  padding: 10px;
-  position: fixed;
-  z-index: 99;
-  bottom: 0;
-}
-.goods-box {
-  padding-bottom: 180px;
-  .ivu-badge {
-    width: 48%;
-    margin: 0 1%;
-    .good-name {
-      margin: 0 0.3% 5px 0;
-      width: 100%;
-      font-size: 12px !important;
-    }
-    .ivu-badge-count {
-      font-size: 8px;
-      top: 2px;
-      right: 10px;
-    }
-  }
-}
-
-.info-box {
-  padding-right: 20px;
-  .basci-info,
-  .eq-info {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-.button-box {
-  display: flex;
-  flex-direction: column;
-  .ivu-btn {
-    margin-top: 2px !important;
-  }
-}
 .eq-img {
   width: 20px;
   vertical-align: middle;
@@ -1950,21 +901,6 @@ export default {
     .ivu-table-cell {
       padding: 0;
     }
-  }
-}
-.pet-btn {
-  padding-top: 5px;
-  display: flex !important;
-  justify-content: center;
-  .ivu-btn {
-    padding: 0 6px !important;
-  }
-}
-
-.slelect-box {
-  padding: 10px;
-  p {
-    padding: 10px;
   }
 }
 </style>
