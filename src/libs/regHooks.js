@@ -454,6 +454,20 @@ export default function (_app) {
     polyLinCb.hookMark = "regHooks.polyLinCb";
     GameApi.regHookHandlers['connector.userHandler.polyLin'].push(polyLinCb);
 
+    // 整理回调
+    let allSellGoodsCb = function (data) {
+        if (data.code != 200) {
+            app.$Message.error(data.msg);
+            return;
+        }
+        // 重置背包
+        app.user.goods = [];
+        app.user.goodsPage = 1;
+        this.getMyGoods();
+    }
+    allSellGoodsCb.hookMark = "regHooks.allSellGoodsCb";
+    GameApi.regHookHandlers['connector.userHandler.allSellGoodsCb'].push(allSellGoodsCb);
+
     // 分解物品回调
     let sellGoodsCb = function (data) {
         if (data.code != 200) {

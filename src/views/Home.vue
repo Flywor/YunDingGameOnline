@@ -1,12 +1,12 @@
 <template>
   <div class="home">
     <div v-show="showMoling">
-      <div class="moling" :style="{ left: '8px', animation: 'molingframe 1s linear 0s infinite' }">魔灵现世</div>
+      <div class="moling" :style="{ left: '50%', fontSize: '80px', animation: 'molingframe 1s linear 0s infinite' }">魔灵现世</div>
       <div
         v-for="(m, i) in molingPosition"
         :key="m"
         class="moling"
-        :style="{ top: '100px', left: `${(i + 1) * 10 + 10}%`, animation: 'molingframe 1s linear 1s infinite' }">
+        :style="{ top: `${(i + 1) * 130}px`, left: '50%', animation: 'molingframe 1s linear 1s infinite' }">
         {{m}}
       </div>
     </div>
@@ -148,7 +148,7 @@ export default {
         password: ''
       },
       userList: [],
-      openDm: false,
+      openDm: true,
       msgList: [],
       msgDm: [],
       sendMsg: '',
@@ -172,9 +172,9 @@ export default {
         if (length === 0) return
         const dm = this.msgList[length - 1]
         if (this.msgDm.some(md => md.msg === dm.msg)) return
-        if (dm.indexOf("<span style='color:red;'>魔灵</span>") > -1) {
+        if (dm.msg.indexOf("<span style='color:red;'>魔灵</span>") > -1) {
           try {
-            this.molingPosition.push(dm.replace(/<[^>]+>/g, '').split(' ').pop());
+            this.molingPosition.push(dm.msg.replace(/<[^>]+>/g, '').split(' ').pop());
           } catch (e) { console.error(e); }
         }
         dm.top = this.randomNum(0, this.dmline)
@@ -328,6 +328,7 @@ export default {
   font-size: 60px;
   z-index: 999999999;
   color: #aa2121;
+  transform: translate(-50%, 0);
 }
 @keyframes molingframe {
   0% {
