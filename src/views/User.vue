@@ -80,7 +80,7 @@
           type="info"
           @click="() => {
             modalTitle = '商城';
-            modalType = 'shop';
+            modalType = 'Shop';
             showModal = true;
           }"
         >商城</Button>
@@ -431,14 +431,6 @@
         </template>
       </template>
       <component v-else-if="!!modalType" :is="`${modalType}Component`" :user="user" :game="game" />
-      <BagComponent v-else-if="'bag' === modalType"/>
-      <EqsComponent v-else-if="'eqs' === modalType"/>
-      <MarketComponent v-else-if="'market' === modalType"/>
-      <PetComponent v-else-if="'pet' === modalType"/>
-      <SkillsComponent v-else-if="'skills' === modalType"/>
-      <TasksComponent v-else-if="'tasks' === modalType"/>
-      <UserinfoComponent v-else-if="'userinfo' === modalType"/>
-      <ShopComponent v-else-if="'shop' === modalType"/>
     </Modal>
     <!-- 综合弹窗 ↑ -->
   </div>
@@ -658,7 +650,6 @@ export default {
     },
     // 设置消息
     setMessage: function (email, data) {
-      console.log(data)
       messageTime = Date.now();
       data.time = this.getDateTime();
       //记录战斗开始时间

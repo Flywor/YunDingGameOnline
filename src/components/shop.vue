@@ -28,23 +28,22 @@
       </Button>
     </div>
   </div>
-  
-              
   <!-- 商城↑ -->
 </template>
 <script>
 export default {
   name: 'shop',
+  props: {
+    user: { type: Object, default: () => ({}) },
+    game: { type: Object, default: () => ({}) }
+  },
   data () {
     return {
-      user: window.user,
-      game: window.game,
       currentGood: {}
     }
   },
   mounted () {
     this.game.getSystemSellGoods()
-    console.log(this.user);
   },
   computed: {
     goods () {
