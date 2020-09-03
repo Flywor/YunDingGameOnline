@@ -1,5 +1,15 @@
 <template>
   <div class="home">
+    <div v-show="showMoling">
+      <div class="moling" :style="{ left: '8px', animation: 'molingframe 1s linear 0s infinite' }">魔灵现世</div>
+      <div
+        v-for="(m, i) in molingPosition"
+        :key="m"
+        class="moling"
+        :style="{ top: '100px', left: `${(i + 1) * 10 + 10}%`, animation: 'molingframe 1s linear 1s infinite' }">
+        {{m}}
+      </div>
+    </div>
     <Form
       ref="formInline"
       :model="formInline"
@@ -11,7 +21,7 @@
       <FormItem prop="password" class="formitem">
         <Input type="password" v-model="formInline.password" placeholder="密码"/>
       </FormItem>
-      <FormItem class="formitem">
+      <FormItem>
         <Button type="primary" size="small" @click="handleLogin">添加账号</Button>
       </FormItem>
       <FormItem>
@@ -35,6 +45,9 @@
       </FormItem>
       <FormItem>
         <Input v-if="openDm" search enter-button="发送" placeholder="快来发送弹幕吧" @on-search="handleSendChat" v-model="sendMsg"/>
+      </FormItem>
+      <FormItem v-if="nextMoling">
+        魔灵将在<Time :time="nextMoling" :interval="999999999"/>出现
       </FormItem>
     </Form>
     <div class="card-container">
@@ -84,7 +97,7 @@
       v-model="showSkillMap"
       :mask="false"
       width="500px"
-      title="宠物技能图鉴"
+      title="技能图鉴"
     >
       <Alert
         v-for="(value,key) in skillMap"
@@ -117,6 +130,7 @@
 </template>
 
 <script>
+const now = Date.now();
 let lastServerChanSend = 0;
 
 import ScreensComponent from '@components/screens.vue';
@@ -145,7 +159,10 @@ export default {
       skillMap: {},
       showMonsterMap: false,
       showScreensContent: false,
-      screens: []
+      screens: [],
+      showMoling: false,
+      nextMoling: null,
+      molingPosition: []
     }
   },
   watch: {
@@ -155,6 +172,11 @@ export default {
         if (length === 0) return
         const dm = this.msgList[length - 1]
         if (this.msgDm.some(md => md.msg === dm.msg)) return
+        if (dm.indexOf("<span style='color:red;'>魔灵</span>") > -1) {
+          try {
+            this.molingPosition.push(dm.replace(/<[^>]+>/g, '').split(' ').pop());
+          } catch (e) { console.error(e); }
+        }
         dm.top = this.randomNum(0, this.dmline)
         dm.color = this.getDmColor(dm)
         this.msgDm.push(dm)
@@ -198,8 +220,23 @@ export default {
       });
     });
     this.skillMap = skillMap;
+
+    this.checkMoling();
   },
   methods: {
+    checkMoling () {
+      let nextMoling = Number(new Date(new Date().toLocaleDateString()).getTime() + 15 * 60 * 60 * 1000)
+      if (now > nextMoling) {
+        if (now - nextMoling < 60 * 60 * 1000) {
+          this.showMoling = true;
+        } else {
+          this.showMoling = false;
+        }
+        nextMoling += 24 * 60 * 60 * 1000;
+      }
+      this.nextMoling = nextMoling;
+      setTimeout(this.checkMoling, 60000);
+    },
     handleSCKEYChange () {
       localStorage.setItem('sckey', this.SCKEY);
     },
@@ -284,6 +321,37 @@ export default {
   }
 }
 </script>
+<style lang="less">
+.moling {
+  position: fixed;
+  top: 10px;
+  font-size: 60px;
+  z-index: 999999999;
+  color: #aa2121;
+}
+@keyframes molingframe {
+  0% {
+    text-shadow: 0 0 4px white, 0 -5px 4px #ff3, 2px -10px 6px #fd3,
+      -2px -15px 11px #f80, 2px -25px 36px #f20;
+  }
+  25% {
+    text-shadow: 0 0 4px white, 2px -7px 6px #ff3, 2px -12px 8px #fd3,
+      -3px -20px 11px #f80, 4px -30px 22px #f20;
+  }
+  50% {
+    text-shadow: 0 0 4px white, 2px -10px 8px #ff3, 2px -14px 10px #fd3,
+      -4px -25px 11px #f80, 4px -35px 25px #f20;
+  }
+  75% {
+    text-shadow: 0 0 4px white, 2px -7px 6px #ff3, 2px -12px 8px #fd3,
+      -3px -20px 11px #f80, 4px -30px 22px #f20;
+  }
+  100% {
+    text-shadow: 0 0 4px white, 0 -5px 4px #ff3, 2px -10px 6px #fd3,
+      -2px -15px 11px #f80, 2px -25px 36px #f20;
+  }
+}
+</style>
 <style lang="less" scoped>
 .home {
   padding: 16px;

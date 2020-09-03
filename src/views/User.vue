@@ -565,7 +565,9 @@ export default {
     setInterval(() => {
       const now = Date.now();
       if (now - messageTime > 30000) {
-        window.location.reload();
+        setTimeout(() => {
+          window.location.reload();
+        }, ~~(Math.random()*60*1000)+30000);
       }
     }, 60000);
   },
@@ -638,6 +640,7 @@ export default {
     },
     // 设置消息
     setMessage: function (email, data) {
+      console.log(data)
       messageTime = Date.now();
       data.time = this.getDateTime();
       //记录战斗开始时间
