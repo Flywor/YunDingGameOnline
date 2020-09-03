@@ -5,7 +5,7 @@
   >
     <p>
       状态：{{user.status}}&nbsp;{{ user.status_msg && `${user.status_msg}` }}
-      <ButtonGroup size="small">
+      <ButtonGroup size="small" shape="circle">
         <Button
           size="small"
           type="info"
@@ -75,6 +75,15 @@
             showModal = true;
           }"
         >市场</Button>
+        <Button
+          size="small"
+          type="info"
+          @click="() => {
+            modalTitle = '商城';
+            modalType = 'shop';
+            showModal = true;
+          }"
+        >商城</Button>
       </ButtonGroup>
     </p>
     <template v-if="user.myInfo">
@@ -422,6 +431,14 @@
         </template>
       </template>
       <component v-else-if="!!modalType" :is="`${modalType}Component`" :user="user" :game="game" />
+      <BagComponent v-else-if="'bag' === modalType"/>
+      <EqsComponent v-else-if="'eqs' === modalType"/>
+      <MarketComponent v-else-if="'market' === modalType"/>
+      <PetComponent v-else-if="'pet' === modalType"/>
+      <SkillsComponent v-else-if="'skills' === modalType"/>
+      <TasksComponent v-else-if="'tasks' === modalType"/>
+      <UserinfoComponent v-else-if="'userinfo' === modalType"/>
+      <ShopComponent v-else-if="'shop' === modalType"/>
     </Modal>
     <!-- 综合弹窗 ↑ -->
   </div>
@@ -440,9 +457,10 @@ import PetComponent from '@components/pet.vue';
 import SkillsComponent from '@components/skills.vue';
 import TasksComponent from '@components/tasks.vue';
 import UserinfoComponent from '@components/userinfo.vue';
+import ShopComponent from '@components/shop.vue';
 export default {
   name: "User",
-  components: { BagComponent, EqsComponent, MarketComponent, PetComponent, SkillsComponent, TasksComponent, UserinfoComponent },
+  components: { BagComponent, EqsComponent, MarketComponent, PetComponent, SkillsComponent, TasksComponent, UserinfoComponent, ShopComponent },
   data() {
     return {
       game: {},
