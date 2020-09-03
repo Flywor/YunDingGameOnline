@@ -1,3 +1,4 @@
+import { sleep, } from "@libs/tools";
 export default {
   data () {
     return {

@@ -19,12 +19,7 @@
         <Input type="text" v-model="user.market.keyword" placeholder="物品名称" />
       </FormItem>
       <FormItem>
-        <Button type="primary" @click="() => {
-          $Spin.show();
-          user.market.pageIndex = 1;
-          user.market.list = [];
-          game.getPlayerSellGoods(user.market.pageIndex, user.market.type);
-        }">搜索</Button>
+        <Button type="primary" @click="handlerMarketSearch">搜索</Button>
       </FormItem>
     </Form>
     <Collapse>
@@ -100,6 +95,12 @@ export default {
       }
       this.$forceUpdate();
       this.$Message.success(`购买${name}${num}个完成`);
+    },
+    handlerMarketSearch () {
+      this.$Spin.show();
+      this.user.market.pageIndex = 1;
+      this.user.market.list = [];
+      this.game.getPlayerSellGoods(this.user.market.pageIndex, this.user.market.type);
     }
   }
 }
