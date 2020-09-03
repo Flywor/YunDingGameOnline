@@ -651,7 +651,13 @@ export default {
           }
           return ra.mark;
         }
-        return `【${ra.a_name}】对【${ra.b_name}】使用了【${ra.process}】造成了【${ra.hurt
+        let trigger = '';
+        if (ra.a_trigger.length > 0) {
+          trigger = '触发了【';
+          trigger += ra.a_trigger.join('，');
+          trigger += '】';
+        }
+        return `【${ra.a_name}】${trigger}对【${ra.b_name}】使用了【${ra.process}】造成了【${ra.hurt
               .map(Math.floor)
               .join(",")}】伤害`
       })
