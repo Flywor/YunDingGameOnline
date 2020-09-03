@@ -123,6 +123,34 @@
         </div>
       </template>
     </div>
+    <!-- 防误操作modal -->
+    <Modal
+      v-model="modal"
+      :styles="{top: '85px'}"
+    >
+      <p
+        slot="header"
+        style="color:#f60;text-align:center"
+      >
+        <Icon type="ios-information-circle"></Icon>
+        <span>确定分解所有标记物品？</span>
+      </p>
+
+      <div
+        slot="footer"
+        style="text-align:center"
+      >
+        <Button
+          size="small"
+          @click="modal=false"
+        >取消</Button>
+        <Button
+          type="primary"
+          size="small"
+          @click="confirmHandle"
+        >确认</Button>
+      </div>
+    </Modal>
   </div>
   <!-- 背包↑ -->
 </template>
@@ -137,7 +165,8 @@ export default {
     return {
       readToUse: null,
       searchText: '',
-      selectedGoods: []
+      selectedGoods: [],
+      modal: false
     }
   },
   mounted () {
@@ -171,7 +200,8 @@ export default {
             info,
             style,
             goodsType,
-            selected: selected ? selected.num : 0,
+            selected: selected ? Number(selected.num) : 0,
+            
           };
           if (ele.goodsType === "可装备的装备") {
             const eq_info = this.getEqsInfo_mixin(ele.info);
@@ -215,8 +245,16 @@ export default {
     handleSellItem() {
       const { useNum, id, name } = this.readToUse;
       if (!useNum || useNum < 0) return this.$Message.error('请输入正确的数量')
-      this.game.sellGoods([{ id, num: useNum }]);
+      //如果有标记，进入批量分解，没有则直接分解     
+      this.selectedGoods.length > 1 ? this.modal = true : this.game.sellGoods([{ id, num: useNum }]);
       this.readToUse = null;
+    },
+    //分解标记物品（批量分解）
+    confirmHandle() {
+      this.game.sellGoods(this.selectedGoods);
+      this.selectedGoods = [];
+      this.readToUse = null;
+      this.modal = false;
     },
     // 上架市场
     handleSellGoods () {
@@ -229,7 +267,7 @@ export default {
     // 选择物品
     selectGood() {
       const { useNum, id } = this.readToUse;
-      if (!useNum || useNum < 0) return this.$Message.error('请输入正确的数量')
+      if (useNum < 0) return this.$Message.error('请输入正确的数量')
       const obj = this.selectedGoods.find((ele) => {
         const res = ele.id === id;
         if (res) {
@@ -240,6 +278,7 @@ export default {
       if (!obj) {
         this.selectedGoods.push({ id, num: useNum });
       }
+      this.selectedGoods = this.selectedGoods.filter(ele => ele.num > 0)
     },
     // 合成物品
     makeGoods () {

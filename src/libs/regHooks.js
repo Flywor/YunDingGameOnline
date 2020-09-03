@@ -417,7 +417,7 @@ export default function (_app) {
             app.$Message.error(data.msg);
             return;
         }
-        app.$Message.success('正在自动补气补蓝');
+        app.$Message.success(data.msg);
 
         // 重置背包
         app.user.goods = [];
@@ -750,6 +750,7 @@ export default function (_app) {
     }
     addUserPetSkillCb.hookMark = "regHooks.addUserPetSkillCb";
     GameApi.regHookHandlers['connector.userHandler.addUserPetSkill'].push(addUserPetSkillCb);
+   
 
     // 上架出售
     let playerSellGoodsCb = function (data) {
@@ -811,5 +812,27 @@ export default function (_app) {
     getPlayerSellGoodsCb.hookMark = "regHooks.getPlayerSellGoodsCb";
     GameApi.regHookHandlers['connector.playerHandler.getPlayerSellGoods'].push(getPlayerSellGoodsCb);
 
-
+    //系统商城
+    let getSystemSellGoodsCb = function (data) {
+        if (data.code != 200) {
+            app.$Message.error(data.msg);
+            return;
+        }
+        const goods = data.data.goods;
+        let shop = {
+            shopPage: 0,
+            goods: []
+        }
+        if (app.user.shop) {
+            shop.shopPage = goods.length > 0 ? app.user.shop.shopPage + 1 : app.user.shop.shopPage-1;
+            shop.goods = app.user.shop.goods.concat(goods);
+        } 
+        
+        if (goods.length > 0) {
+            this.getSystemSellGoods(shop.shopPage+1)
+        }
+        app.$set(app.user, 'shop', shop);
+    }
+    getSystemSellGoodsCb.hookMark = "regHooks.getSystemSellGoodsCb";
+    GameApi.regHookHandlers['connector.systemHandler.getSystemSellGoods'].push(getSystemSellGoodsCb);
 }
