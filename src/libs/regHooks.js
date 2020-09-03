@@ -466,7 +466,7 @@ export default function (_app) {
         this.getMyGoods();
     }
     allSellGoodsCb.hookMark = "regHooks.allSellGoodsCb";
-    GameApi.regHookHandlers['connector.userHandler.allSellGoodsCb'].push(allSellGoodsCb);
+    GameApi.regHookHandlers['connector.userHandler.allSellGoods'].push(allSellGoodsCb);
 
     // 分解物品回调
     let sellGoodsCb = function (data) {
