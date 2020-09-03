@@ -13,11 +13,12 @@
 <script>
 export default {
   name: 'userinfo',
+  props: {
+    user: { type: Object, default: () => ({}) },
+    game: { type: Object, default: () => ({}) }
+  },
   data () {
-    return {
-      user: window.user,
-      game: window.game
-    }
+    return {}
   },
   computed: {
     userInfo() {

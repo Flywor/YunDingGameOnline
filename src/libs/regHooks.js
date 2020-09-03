@@ -2,6 +2,7 @@ import GameApi from './YunDingOnlineSDK'
 
 window.freshPackage = true
 window.chatMsg = []
+window.screens = []
 
 // 暴露一个接口 用来接收 app 对象
 export default function (_app) {
@@ -226,6 +227,10 @@ export default function (_app) {
             return;
         }
         let user = app.user;
+
+        if (window.screens.length === 0) {
+            window.screens.push(...data.data.screens);
+        }
 
         app.$set(user, 'screens', data.data.screens);
         app.$set(user, 'teams', data.data.teams.filter(ts => ts.users.length !== ((ts.combat || {}).player_num)));
@@ -799,9 +804,7 @@ export default function (_app) {
                     list: good_map_type[name].sort((n, m) => (n.sell_game_gold / n.count) - (m.sell_game_gold / m.count))
                 });
             });
-            app.user.market.sellGoods = sellGoods;
-
-            app.$forceUpdate();
+            app.$set(app.user.market, 'sellGoods', sellGoods);
             app.$Spin.hide();
         }
     }

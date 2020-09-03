@@ -129,10 +129,12 @@
 <script>
 export default {
   name: 'bag',
+  props: {
+    user: { type: Object, default: () => ({}) },
+    game: { type: Object, default: () => ({}) }
+  },
   data () {
     return {
-      user: window.user,
-      game: window.game,
       readToUse: null,
       searchText: '',
       selectedGoods: []
@@ -201,7 +203,7 @@ export default {
       this.game.getMyGoods();
     },
     // 使用物品
-    async handleUseItem() {
+    handleUseItem() {
       this.useItem_mixin(this.readToUse);
     },
     // 装备物品

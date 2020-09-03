@@ -1,4 +1,9 @@
 export default {
+  data () {
+    return {
+      rareType: ["普通", "稀有", "传说", "PY"]
+    }
+  },
   filters: {
     addStyle_mixin (val) {
       const arr1 = ["体质", "魔力", "力量", "耐力", "敏捷"];

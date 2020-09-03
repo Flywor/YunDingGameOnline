@@ -74,11 +74,12 @@
 <script>
 export default {
   name: 'market',
+  props: {
+    user: { type: Object, default: () => ({}) },
+    game: { type: Object, default: () => ({}) }
+  },
   data () {
-    return {
-      user: window.user,
-      game: window.game
-    }
+    return {}
   },
   methods: {
     // 购买东西

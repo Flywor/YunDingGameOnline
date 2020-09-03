@@ -46,10 +46,12 @@
 <script>
 export default {
   name: 'skills',
+  props: {
+    user: { type: Object, default: () => ({}) },
+    game: { type: Object, default: () => ({}) }
+  },
   data () {
     return {
-      user: window.user,
-      game: window.game,
       upSkillNum: 50,
       upSkillType: 1
     }

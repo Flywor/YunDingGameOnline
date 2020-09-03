@@ -202,10 +202,12 @@
 <script>
 export default {
   name: 'pet',
+  props: {
+    user: { type: Object, default: () => ({}) },
+    game: { type: Object, default: () => ({}) }
+  },
   data () {
     return {
-      user: window.user,
-      game: window.game,
       tabPaneName: "name1",
       columns: [
         {
@@ -251,7 +253,7 @@ export default {
     petsInfo () {
       const arr = this.user.myPets;
       let pets = [];
-      const type = ["普通", "稀有", "传说", "PY"];
+      const type = this.rareType;
       arr &&
         arr.forEach((ele) => {
           const { skill, _id, name, status, bat_num } = ele;

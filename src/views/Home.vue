@@ -21,11 +21,14 @@
         <Button type="primary" size="small" @click="showMonsterMap = true">怪物图鉴</Button>
       </FormItem>
       <FormItem>
+        <Button type="primary" size="small" @click="showScreensContent = true">副本资料</Button>
+      </FormItem>
+      <FormItem>
         <Input type="password" v-model="SCKEY" @on-change="handleSCKEYChange" placeholder="serverChan SCKEY" />
       </FormItem>
       <FormItem>
         弹幕
-        <i-switch v-model="openDm" @on-change="handleDMflag">
+        <i-switch v-model="openDm">
           <span slot="open">开</span>
           <span slot="close">关</span>
         </i-switch>
@@ -69,7 +72,7 @@
         v-for="msg in msgDm"
         :key="msg.key"
         class="dm"
-        :style="{ top: `${msg.top * 32}px` }"
+        :style="{ top: `${msg.top * 32}px`, display: openDm? 'block': 'none' }"
         :color="msg.color"
         size="large"
       >
@@ -92,76 +95,36 @@
         【{{value}}】
       </Alert>
     </Drawer>
-    <Modal
-      v-model="showMonsterMap"
-      fullscreen
-      footer-hide
-      title="宠物图鉴"
-      @on-visible-change="flag => flag || (monsterMap = [])"
+    <Drawer
+      v-model="showScreensContent"
+      :mask="false"
+      width="400px"
+      title="副本资料"
+      placement="left"
     >
-      <Form ref="formInline" inline>
-        <FormItem>
-          <Select v-model="monsterSearch.skills" filterable multiple placeholder="怪物包含的技能">
-            <Option
-              v-for="(value, key) in skillMap"
-              :key="key"
-              :value="key"
-            >{{key}}</option>
-          </Select>
-        </FormItem>
-        <FormItem>
-          <Select v-model="monsterSearch.rare" multiple placeholder="怪物品质">
-            <Option
-              v-for="(txt, i) in rareType"
-              :key="txt"
-              :value="i"
-            >{{txt}}</option>
-          </Select>
-        </FormItem>
-        <FormItem>
-          <Button type="primary" @click="handlerSearchMonster">搜索</Button>
-        </FormItem>
-      </Form>
-      <h1 v-if="monsterMap.length === 0">没有结果，你得重新搜索</h1>
-      <Card
-        v-for="monster in monsterMap"
-        :key="monster._id"
-        style="margin: 0 8px 8px 0;display:inline-block;width: 200px;vertical-align: top;"
-        :title="monster.name"
-      >
-        <p>等级：{{monster.level || '作者没写'}}</p>
-        <p>副本：{{monster.map || '作者没写'}}</p>
-        <p>成长：{{monster.growing_num}}</p>
-        <p>品质：{{rareType[monster.type]}}</p>
-        <p>躲避资质：{{monster.dodge_zz}}</p>
-        <p>攻击资质：{{monster.str_zz}}</p>
-        <p>法力资质：{{monster.int_zz}}</p>
-        <p>体力资质：{{monster.con_zz}}</p>
-        <p>防御资质：{{monster.vit_zz}}</p>
-        <p>速度资质：{{monster.speed_zz}}</p>
-        <p>躲避资质：{{monster.dodge_zz}}</p>
-        <template v-if="monster.skill && monster.skill.length > 0">
-          <p>携带技能：</p>
-          <Tooltip v-for="skill in monster.skill" :key="`${monster._id}${skill._id}`" word-wrap>
-            <Tag color="primary" type="border">
-              {{skill.name}}
-            </Tag>
-            <div slot="content">
-              {{skill.info}}
-            </div>
-          </Tooltip>
-        </template>
-      </Card>
-    </Modal>
+      <ScreensComponent :screens="screens" />
+    </Drawer>
+    <Drawer
+      v-model="showMonsterMap"
+      :mask="false"
+      width="675px"
+      title="宠物图鉴"
+      draggable
+    >
+      <MonsterMapComponent v-if="showMonsterMap" :skillMap="skillMap" />
+    </Drawer>
   </div>
 </template>
 
 <script>
 let lastServerChanSend = 0;
 
+import ScreensComponent from '@components/screens.vue';
+import MonsterMapComponent from '@components/monster-map.vue';
 import { sleep, randomNum } from "@libs/tools";
 export default {
   name: 'Home',
+  components: { ScreensComponent, MonsterMapComponent },
   data () {
     return {
       randomNum,
@@ -181,9 +144,8 @@ export default {
       showSkillMap: false,
       skillMap: {},
       showMonsterMap: false,
-      monsterMap: [],
-      rareType: ["普通", "稀有", "传说", "PY"],
-      monsterSearch: {}
+      showScreensContent: false,
+      screens: []
     }
   },
   watch: {
@@ -238,15 +200,13 @@ export default {
     this.skillMap = skillMap;
   },
   methods: {
-    handleDMflag (flag) {
-      this.$refs['userFrame'][0].contentWindow.game.subSystemMsg(flag ? 1: 0);
-    },
     handleSCKEYChange () {
       localStorage.setItem('sckey', this.SCKEY);
     },
     frameLoad (index) {
       if (index != 0) return;
       this.msgList = this.$refs['userFrame'][0].contentWindow.chatMsg;
+      this.screens = this.$refs['userFrame'][0].contentWindow.screens;
       this.openDm = false;
     },
     getDmColor (msg) {
@@ -320,24 +280,6 @@ export default {
 
       // 更新保存用户
       this.saveStorageUser(email);
-    },
-    handlerSearchMonster () {
-      const mdata = window.monsterData.data;
-      const { skills, rare } = this.monsterSearch;
-      this.monsterMap = mdata.filter(d => {
-        let flag = true;
-        if (rare && rare.length > 0) {
-          flag = rare.includes(d.type);
-        }
-        if (flag && skills && skills.length > 0) {
-          if (d.skill) {
-            flag = d.skill.some(skl => skills.includes(skl.name));
-          } else {
-            flag = false;
-          }
-        }
-        return flag;
-      });
     }
   }
 }

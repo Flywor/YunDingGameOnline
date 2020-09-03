@@ -40,11 +40,12 @@
 <script>
 export default {
   name: 'tasks',
+  props: {
+    user: { type: Object, default: () => ({}) },
+    game: { type: Object, default: () => ({}) }
+  },
   data () {
-    return {
-      user: window.user,
-      game: window.game
-    }
+    return {}
   }
 }
 </script>

@@ -11,7 +11,7 @@
           type="info"
           @click="() => {
             modalTitle = '装备信息';
-            modalType = 'eqs';
+            modalType = 'Eqs';
             showModal = true;
           }"
         >
@@ -22,7 +22,7 @@
           type="info"
           @click="() => {
             modalTitle = '人物属性';
-            modalType = 'userinfo';
+            modalType = 'Userinfo';
             showModal = true;
           }"
         >
@@ -33,7 +33,7 @@
           type="info"
           @click="() => {
             modalTitle = '战斗收益';
-            modalType = 'gains';
+            modalType = 'Gains';
             showModal = true;
           }"
         >
@@ -44,7 +44,7 @@
           type="info"
           @click="() => {
             modalTitle = '宠物信息';
-            modalType = 'pet';
+            modalType = 'Pet';
             showModal = true;
           }"
         >宠物</Button>
@@ -53,7 +53,7 @@
           type="info"
           @click="() => {
             modalTitle = '人物技能';
-            modalType = 'skills';
+            modalType = 'Skills';
             showModal = true;
           }"
         >技能</Button>
@@ -62,7 +62,7 @@
           type="info"
           @click="() => {
             modalTitle = '任务中心';
-            modalType = 'tasks';
+            modalType = 'Tasks';
             showModal = true;
           }"
         >任务</Button>
@@ -71,7 +71,7 @@
           type="info"
           @click="() => {
             modalTitle = '市场';
-            modalType = 'market';
+            modalType = 'Market';
             showModal = true;
           }"
         >市场</Button>
@@ -88,32 +88,22 @@
           @click="game.upPlayerLevel()"
         >升级</a>
         &nbsp;
-        <Poptip
-          v-if="user.myInfo.potential_num > 0"
-          transfer
-          placement="bottom"
-        >
+        <Dropdown v-if="user.myInfo.potential_num > 0" trigger="click">
           <Button
             size="small"
             type="info"
           >
             加点
           </Button>
-          <div slot="content">
-            <a
-              @click="handleAllocationPoint(1)"
-              size="small"
-            >
-              全力加点
-            </a>
-            <a
-              @click="handleAllocationPoint(2)"
-              size="small"
-            >
-              全魔加点
-            </a>
-          </div>
-        </Poptip>
+          <DropdownMenu slot="list">
+            <DropdownItem
+              @click.native="handleAllocationPoint(1)"
+            >全力加点</DropdownItem>
+            <DropdownItem
+              @click.native="handleAllocationPoint(2)"
+            >全魔加点</DropdownItem>
+          </DropdownMenu>
+        </Dropdown>
       </p>
       <div class="br" />
       <p>
@@ -126,7 +116,7 @@
           type="info"
           @click="() => {
             modalTitle = '储物戒指';
-            modalType = 'bag';
+            modalType = 'Bag';
             showModal = true;
           }"
         >
@@ -204,70 +194,49 @@
       >
         {{ user.map.name }}
       </Button>
-      <Poptip
-        v-else
-        transfer
-        placement="bottom"
-      >
+      <Dropdown trigger="click" v-else>
         <Button
           size="small"
           type="info"
         >
           {{ user.map.name }}
         </Button>
-        <div slot="content">
-          <p
-            v-for="item in toMap"
+        <DropdownMenu slot="list">
+          <DropdownItem
+             v-for="item in toMap"
             :key="item.id"
-          >
-            <a
-              @click="() => {
-                $Message.warning(`正在切图去${item.name}，别乱点`)
-                moveToMap(item.id).then(() => {
-                  $Message.success(`${item.name}到了`)
-                });
-              }"
-              size="small"
-              style="width: 100%;"
-            >
-              {{item.name}}
-            </a>
-          </p>
-        </div>
-      </Poptip>
+            @click.native="() => {
+              $Message.warning(`正在切图去${item.name}，别乱点`)
+              moveToMap(item.id).then(() => {
+                $Message.success(`${item.name}到了`)
+              });
+            }"
+          >{{item.name}}</DropdownItem>
+        </DropdownMenu>
+      </Dropdown>
     </template>
     <!-- 地图 ↑ -->
     <!-- 副本 ↓ -->
     <template v-if="user.team && user.team.leader === user.email">
       副本：
-      <Poptip
-        transfer
-        placement="bottom"
-      >
+      <Dropdown trigger="click">
         <Button
           size="small"
           type="info"
         >
           {{ user.combatName || '未选择' }}
         </Button>
-        <div slot="content">
-          <p
-            v-for="item in user.screens"
+        <DropdownMenu slot="list">
+          <DropdownItem
+             v-for="item in user.screens"
             :key="item._id"
-          >
-            <a
-              @click="() => {
+            @click.native="() => {
               user.team.combat = item._id;
               game.switchCombatScreen(item._id);
             }"
-              size="small"
-              style="width: 100%;"
-            >
-              {{item.name}}
-            </a>
-          </p>
-        </div>
-      </Poptip>
+          >{{item.name}}</DropdownItem>
+        </DropdownMenu>
+      </Dropdown>
     </template>
     <!-- 副本 ↑ -->
     <!-- 组队 ↓ -->
@@ -315,70 +284,55 @@
         创建
       </Button>
       &nbsp;
-      <Poptip
-        transfer
-        placement="bottom"
-      >
+      <Dropdown trigger="click" @click.native="game.getTeamList(user.map.id)">
         <Button
           size="small"
           type="success"
-          @click="game.getTeamList(user.map.id)"
         >
           加入
         </Button>
-        <div slot="content">
-          <p
+        <DropdownMenu slot="list">
+          <DropdownItem
             v-for="item in user.teams"
             :key="item._id"
+            @click.native="() => {
+              game.addTeam(item._id);
+            }"
           >
-            <a
-              @click="game.addTeam(item._id)"
-              size="small"
-              style="width:100%;"
-            >
-              {{item.leader.nickname}}&nbsp;({{item.leader.level}})&nbsp;[{{item.users.length}}/{{(item.combat || {}).player_num}}]
-            </a>
-          </p>
-        </div>
-      </Poptip>
+            {{item.leader.nickname}}
+            &nbsp;
+            [{{item.users.length}}/{{(item.combat || {}).player_num}}]
+            &nbsp;
+            ({{(item.combat || {}).name}})
+          </DropdownItem>
+        </DropdownMenu>
+      </Dropdown>
     </template>
     <!-- 组队 ↑ -->
     <div class="br" />
     <!-- 技能 ↓ -->
     技能：
-    <Poptip
-      transfer
-      placement="bottom"
-      v-if="user.skills"
-    >
+    <Dropdown v-if="user.skills" trigger="click">
       <Button
         size="small"
         type="warning"
       >
         {{user.skillname || '物理攻击'}}
       </Button>
-      <div slot="content">
-        <template v-if="user.skills.length === 0">
+      <DropdownMenu slot="list">
+        <DropdownItem v-if="user.skills.length === 0">
           没技能
-        </template>
-        <template v-else>
-          <p
-            v-for="item in user.skills"
-            :key="item._id"
-          >
-            <a
-              @click="() => {
-              $set(user, 'skillid', item._id);
-              $set(user, 'skillname', item.name);
-            }"
-              style="width:100%;"
-            >
-              {{item.name}}
-            </a>
-          </p>
-        </template>
-      </div>
-    </Poptip>
+        </DropdownItem>
+        <DropdownItem
+          v-for="item in user.skills"
+          :key="item._id"
+          @click.native="() => {
+            $set(user, 'skillid', item._id);
+            $set(user, 'skillname', item.name);
+          }"
+        >{{item.name}}</DropdownItem>
+      </DropdownMenu>
+    </Dropdown>
     <!-- 捕捉 ↓ -->
     捕捉：
     <Select v-model="user.catchPet" multiple size="small" style="width: auto;">
@@ -424,7 +378,7 @@
       footer-hide
       :title="modalTitle"
     >
-      <template v-if="'gains' === modalType">
+      <template v-if="'Gains' === modalType">
         <div v-if="!fightGains.beginTime">
           {{gains.tips}}
         </div>
@@ -467,13 +421,7 @@
           >{{key}}({{value}})</Tag>
         </template>
       </template>
-      <BagComponent v-else-if="'bag' === modalType"/>
-      <EqsComponent v-else-if="'eqs' === modalType"/>
-      <MarketComponent v-else-if="'market' === modalType"/>
-      <PetComponent v-else-if="'pet' === modalType"/>
-      <SkillsComponent v-else-if="'skills' === modalType"/>
-      <TasksComponent v-else-if="'tasks' === modalType"/>
-      <UserinfoComponent v-else-if="'userinfo' === modalType"/>
+      <component v-else-if="!!modalType" :is="`${modalType}Component`" :user="user" :game="game" />
     </Modal>
     <!-- 综合弹窗 ↑ -->
   </div>
@@ -603,7 +551,6 @@ export default {
         //endTime: endTime, //结束时间
         avgExp: avgExp, //经验/分
         avgFightCount: avgFightCount, //战斗场数/分
-
         tips: "暂无收益，请开启战斗",
       };
     }
@@ -684,7 +631,7 @@ export default {
       user.market = { type: '1' };
       this.user = user;
       // 暴露到全局
-      window.user = user;
+      window.user = this.user;
 
       // 登录账号
       game.login(email, password);
