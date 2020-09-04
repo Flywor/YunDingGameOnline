@@ -187,7 +187,7 @@ export default {
             : null; //价格
           const info = ele.info.info; //描述
           const style = ele.info.style; //文字样式
-          const goodsType = ele.goodsType; //文字样式
+          const goodsType = ele.info.info.includes('蛋') ? '蛋' : ele.goodsType; //物品类型
           const selected = this.selectedGoods.find(
             (item) => item.id === ele.id
           );
@@ -221,7 +221,6 @@ export default {
         });
         return list;
       }
-
       return arr;
     }
   },
