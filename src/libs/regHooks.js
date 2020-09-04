@@ -261,20 +261,11 @@ export default function (_app) {
         const battleUnit = data.data.initData
         
         let catchTarget
-        if (user.catchType) {
-            // 匹配捕捉带技能的宠物
-            if (user.catchSkills && user.catchSkills.includes) {
-                catchTarget = battleUnit.find(bu => {
-                    return bu.skills.some(skl => user.catchSkills.includes(skl.name));
-                })
-            }
-        } else {
-            // 匹配捕捉的宠物名称
-            if (user.catchPet && user.catchPet.includes) {
-                catchTarget = battleUnit.find(bu => user.catchPet.includes(bu.name.replace(/<[^>]+>/g, '')))
-            }
+        const catchList = user.catchType ? user.catchPetBySkill: user.catchPet;
+        // 匹配捕捉的宠物名称
+        if (catchList && catchList.includes) {
+            catchTarget = battleUnit.find(bu => catchList.includes(bu.name.replace(/<[^>]+>/g, '')))
         }
-        console.log(catchTarget, battleUnit)
         if (catchTarget) {
             this.roundOperating(
                 '1001',
@@ -382,8 +373,7 @@ export default function (_app) {
                         goodsType = '大补丹';
                         break;
                     default:
-                        console.log(`这个${good.goods_type}俺不知道`)
-                        goodsType = `这个${good.goods_type}俺不知道`;
+                        console.log(`这个${good.name}俺不知道是什么类型`)
                         break;
                 }
                 // 解析宝图位置

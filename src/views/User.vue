@@ -343,7 +343,7 @@
       </DropdownMenu>
     </Dropdown>
     <!-- 捕捉 ↓ -->
-    <PetCatchCtrlComponent :user="user" :game="game" />
+    <PetCatchCtrlComponent v-if="user && game" :user="user" :game="game" />
     <!-- 捕捉 ↑ -->
     <!-- 战斗信息 ↓ -->
     <div v-if="'object' == typeof user.message">
@@ -579,6 +579,7 @@ export default {
           skillname: user.skillname,
           catchType: user.catchType,
           catchSkills: user.catchSkills,
+          catchPetBySkill: user.catchPetBySkill,
           catchPet: user.catchPet,
           isCompose: user.isCompose
         })
@@ -653,7 +654,6 @@ export default {
           trigger += ra.a_trigger.join('，');
           trigger += '】';
         }
-        console.log(trigger)
         return `【${ra.a_name}】${trigger}对【${ra.b_name}】使用了【${ra.process}】造成了【${ra.hurt
               .map(Math.floor)
               .join(",")}】伤害`

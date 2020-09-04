@@ -227,7 +227,7 @@ export default {
     checkMoling () {
       let nextMoling = Number(new Date(new Date().toLocaleDateString()).getTime() + 15 * 60 * 60 * 1000)
       if (now > nextMoling) {
-        if (now - nextMoling < 15 * 60 * 1000) {
+        if ((now - nextMoling) < (5 * 60 * 1000)) {
           this.showMoling = true;
         } else {
           this.showMoling = false;
@@ -235,7 +235,7 @@ export default {
         nextMoling += 24 * 60 * 60 * 1000;
       }
       this.nextMoling = nextMoling;
-      setTimeout(this.checkMoling, 60000);
+      setTimeout(() => this.checkMoling(), 1000);
     },
     handleSCKEYChange () {
       localStorage.setItem('sckey', this.SCKEY);
