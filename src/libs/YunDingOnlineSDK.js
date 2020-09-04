@@ -415,7 +415,9 @@ GameApi.prototype.onMessage = function (event) {
 */
 GameApi.prototype.onError = function (event) {
     console.log('onError', event);
-    window.location.reload();
+    setTimeout(() => {
+        window.location.reload();
+    }, ~~(Math.random()*60*1000)+30000);
 };
 
 /**
@@ -481,7 +483,9 @@ GameApi.prototype.sendMessage = function (data, route, cb) {
     let packet = Package.encode(pkg_type, bytes);
 
     if (this.socket.readyState === this.socket.CLOSED) {
-        location.reload()
+        setTimeout(() => {
+            window.location.reload();
+        }, ~~(Math.random()*60*1000)+30000);
     }
 
     // 发出封包 这里应该有发送失败的处理

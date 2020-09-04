@@ -227,7 +227,7 @@ export default {
     checkMoling () {
       let nextMoling = Number(new Date(new Date().toLocaleDateString()).getTime() + 15 * 60 * 60 * 1000)
       if (now > nextMoling) {
-        if (now - nextMoling < 60 * 60 * 1000) {
+        if (now - nextMoling < 15 * 60 * 1000) {
           this.showMoling = true;
         } else {
           this.showMoling = false;
@@ -244,7 +244,6 @@ export default {
       if (index != 0) return;
       this.msgList = this.$refs['userFrame'][0].contentWindow.chatMsg;
       this.screens = this.$refs['userFrame'][0].contentWindow.screens;
-      this.openDm = false;
     },
     getDmColor (msg) {
       // 回收弹幕

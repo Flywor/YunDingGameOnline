@@ -44,6 +44,7 @@
   <!-- 人物技能↑ -->
 </template>
 <script>
+import { sleep } from "@libs/tools";
 export default {
   name: 'skills',
   props: {

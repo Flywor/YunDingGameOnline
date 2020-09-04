@@ -84,7 +84,7 @@ export default {
           }
         }
         return flag;
-      });
+      }).sort((n, m) => n.growing_num - m.growing_num);
     }
   }
 }

@@ -343,29 +343,8 @@
       </DropdownMenu>
     </Dropdown>
     <!-- 捕捉 ↓ -->
-    捕捉：
-    <Select v-model="user.catchPet" multiple size="small" style="width: auto;">
-      <Option
-        v-for="monster in monsterList"
-        :value="monster"
-        :label="monster"
-        :key="monster"
-      >
-        {{monster}}
-      </Option>
-    </Select>
-    &nbsp;
-    丢弃：
-    <Select v-model="user.discardPet" multiple size="small" style="width: auto;">
-      <Option
-        v-for="monster in monsterList"
-        :value="monster"
-        :key="monster"
-      >
-        {{monster}}
-      </Option>
-    </Select>
-    <div class="br" />
+    <PetCatchCtrlComponent :user="user" :game="game" />
+    <!-- 捕捉 ↑ -->
     <!-- 战斗信息 ↓ -->
     <div v-if="'object' == typeof user.message">
       [{{ user.message.time }}]
@@ -373,6 +352,7 @@
       {{'第' + user.message.round_num + '轮'}}
       &nbsp;
       <div
+        v-if="user.message.mark"
         v-html="user.message.mark"
       />
       <div
@@ -450,9 +430,10 @@ import SkillsComponent from '@components/skills.vue';
 import TasksComponent from '@components/tasks.vue';
 import UserinfoComponent from '@components/userinfo.vue';
 import ShopComponent from '@components/shop.vue';
+import PetCatchCtrlComponent from '@components/pet-catch-ctrl.vue';
 export default {
   name: "User",
-  components: { BagComponent, EqsComponent, MarketComponent, PetComponent, SkillsComponent, TasksComponent, UserinfoComponent, ShopComponent },
+  components: { BagComponent, EqsComponent, MarketComponent, PetComponent, SkillsComponent, TasksComponent, UserinfoComponent, ShopComponent, PetCatchCtrlComponent },
   data() {
     return {
       game: {},
@@ -467,8 +448,7 @@ export default {
         beginTime: 0, //开始时间
         roundCount: 0, //回合数
         fightCount: 0, //战斗场数
-      },
-      monsterList: JSON.parse(localStorage.getItem('monsterList') || '[]'), // 怪物列表
+      }
     };
   },
   watch: {
@@ -492,12 +472,6 @@ export default {
         user.combatTotal = combatTotal;
         this.saveStorageUserInfo(user);
       },
-    },
-    monsterList: {
-      deep: true,
-      handler (list) {
-        localStorage.setItem('monsterList', JSON.stringify(list))
-      }
     }
   },
   computed: {
@@ -603,8 +577,10 @@ export default {
           email: user.email,
           skillid: user.skillid,
           skillname: user.skillname,
+          catchType: user.catchType,
+          catchSkills: user.catchSkills,
           catchPet: user.catchPet,
-          discardPet: user.discardPet || []
+          isCompose: user.isCompose
         })
       );
     },
@@ -661,6 +637,14 @@ export default {
           if (ra.mark.indexOf('成功') > 1) {
             this.game.getMyPet();
           }
+          if (ra.mark.indexOf('mp不足') > 1) {
+            this.game.roundOperating(
+                this.user.skilltype || '1',
+                this.user.skillid || '1',
+                '',
+                this.user.team ? this.user.team._id : ''
+            );
+          }
           return ra.mark;
         }
         let trigger = '';
@@ -669,6 +653,7 @@ export default {
           trigger += ra.a_trigger.join('，');
           trigger += '】';
         }
+        console.log(trigger)
         return `【${ra.a_name}】${trigger}对【${ra.b_name}】使用了【${ra.process}】造成了【${ra.hurt
               .map(Math.floor)
               .join(",")}】伤害`
@@ -793,9 +778,12 @@ export default {
       for(let i = 0; i < path.length; i++) {
         const map = path[i];
         this.$Message.success(`正在切图去${map.name}`);
-        this.game.moveToNewMap(map.id);
         await sleep(5000);
+        this.game.moveToNewMap(map.id);
       }
+    },
+    handleUseItem () {
+      this.useItem_mixin(this.readToUse);
     }
   }
 };

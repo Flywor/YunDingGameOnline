@@ -259,26 +259,37 @@ export default function (_app) {
         }
         const user = app.user
         const battleUnit = data.data.initData
-
-        // 储存怪物列表，用以指定捕捉
-        battleUnit.filter(bu => bu.team == 2).map(bu => {
-            const petname = bu.name.replace(/<[^>]+>/g, '')
-            if (!app.monsterList.includes(petname)) {
-                app.monsterList.push(petname)
-            }
-        })
         
-        // 匹配捕捉的宠物名称
         let catchTarget
-        if (user.catchPet && user.catchPet.includes) {
-            catchTarget = battleUnit.find(bu => user.catchPet.includes(bu.name.replace(/<[^>]+>/g, '')))
+        if (user.catchType) {
+            // 匹配捕捉带技能的宠物
+            if (user.catchSkills && user.catchSkills.includes) {
+                catchTarget = battleUnit.find(bu => {
+                    return bu.skills.some(skl => user.catchSkills.includes(skl.name));
+                })
+            }
+        } else {
+            // 匹配捕捉的宠物名称
+            if (user.catchPet && user.catchPet.includes) {
+                catchTarget = battleUnit.find(bu => user.catchPet.includes(bu.name.replace(/<[^>]+>/g, '')))
+            }
         }
-        this.roundOperating(
-            catchTarget ? '1001' : (user.skilltype || '1'),
-            catchTarget ? '' : (user.skillid || '1'),
-            catchTarget ? catchTarget.id: '',
-            user.team ? user.team._id : ''
-        );
+        console.log(catchTarget, battleUnit)
+        if (catchTarget) {
+            this.roundOperating(
+                '1001',
+                '',
+                catchTarget.id,
+                user.team ? user.team._id : ''
+            );
+        } else {
+            this.roundOperating(
+                user.skilltype || '1',
+                user.skillid || '1',
+                '',
+                user.team ? user.team._id : ''
+            );
+        }
     }
     onStartBatCb.hookMark = "regHooks.onStartBatCb";
     GameApi.regHookHandlers['onStartBat'].push(onStartBatCb);
@@ -294,7 +305,7 @@ export default function (_app) {
         if (user.myInfo.mp_store < 5000) {
             this.byGoodsToSystem(2, '5eef5d140faad0b123d709c6');
         }
-        if (user.fighting) {
+        if (user.fighting && user.team) {
             this.startCombat(user.team.combat);
         }
 
@@ -304,16 +315,6 @@ export default function (_app) {
     }
     onRoundBatEndCb.hookMark = "regHooks.onRoundBatEndCb";
     GameApi.regHookHandlers['onRoundBatEnd'].push(onRoundBatEndCb);
-
-    // 回合操作
-    let roundOperatingCb = function (data) {
-        if (data.code != 200) {
-            app.$Message.error(data.msg);
-            return;
-        }
-    }
-    roundOperatingCb.hookMark = "regHooks.roundOperatingCb";
-    GameApi.regHookHandlers['connector.teamHandler.roundOperating'].push(roundOperatingCb);
 
     // 发送消息
     let chatSendCb = function (data) {
@@ -377,6 +378,7 @@ export default function (_app) {
                         goodsType = '大补丹';
                         break;
                     default:
+                        console.log(`这个${good.goods_type}俺不知道`)
                         goodsType = `这个${good.goods_type}俺不知道`;
                         break;
                 }
