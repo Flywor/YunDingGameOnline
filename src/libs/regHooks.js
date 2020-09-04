@@ -372,7 +372,11 @@ export default function (_app) {
                         goodsType = '法宝材料';
                         break;
                     case '5eedd0138822d61cf3d9548a':
+                    case '5eedd0178822d61cf3d9548b':
                         goodsType = '兽决';
+                        break;
+                    case '5eef5f0b0faad0b123d709d0':
+                        goodsType = '大补丹';
                         break;
                     case '5eef5f0b0faad0b123d709d0':
                         goodsType = '大补丹';
@@ -382,7 +386,6 @@ export default function (_app) {
                         goodsType = `这个${good.goods_type}俺不知道`;
                         break;
                 }
-
                 // 解析宝图位置
                 if (good.name && good.expand) {
                     map = JSON.parse(good.expand).map
