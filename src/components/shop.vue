@@ -70,27 +70,6 @@ export default {
         return arr;
       }
     }
-  },
-  methods: {
-    // 购买东西
-    handleByGoods (gds) {
-      const num = gds.buyNum || 1;
-      const name = gds.name || gds.goods.name;
-      if (num == gds.count) {
-        this.game.byPalyerGoods(gds._id, 2);
-
-        const gdsList = user.market.sellGoods.find(sg => sg.name === name).list;
-        const index = gdsList.findIndex(gl => gl._id === gds._id);
-        gdsList.splice(index, 1);
-      } else {
-        for (let i = 0; i < num; i++) {
-          gds.count--;
-          this.game.byPalyerGoods(gds._id, 1);
-        }
-      }
-      this.$forceUpdate();
-      this.$Message.success(`购买${name}${num}个完成`);
-    }
   }
 }
 </script>

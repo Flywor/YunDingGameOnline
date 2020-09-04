@@ -37,7 +37,7 @@
         </Button>
       </Badge>
     </div>
-    <div class="good-info">
+    <div class="good-info" :style="position">
       <p v-if="!readToUse">
         去上面点一个物品
       </p>
@@ -121,6 +121,14 @@
             </Button>
           </ButtonGroup>
         </div>
+        <Button
+          size="small"
+          class="close-btn"
+          type="info"
+          @click="position = position === 'bottom: 0' ? 'bottom:-120px' : 'bottom: 0'"
+        >
+          {{ position === "bottom: 0" ? "隐藏" : "显示"}}
+        </Button>
       </template>
     </div>
     <!-- 防误操作modal -->
@@ -166,7 +174,8 @@ export default {
       readToUse: null,
       searchText: '',
       selectedGoods: [],
-      modal: false
+      modal: false,
+      position: 'bottom: 0' //信息面板位置
     }
   },
   mounted () {
@@ -187,7 +196,7 @@ export default {
             : null; //价格
           const info = ele.info.info; //描述
           const style = ele.info.style; //文字样式
-          const goodsType = ele.goodsType; //文字样式
+          const goodsType = ele.info.info.includes('蛋') ? '蛋' : ele.goodsType; //物品类型
           const selected = this.selectedGoods.find(
             (item) => item.id === ele.id
           );
@@ -221,7 +230,6 @@ export default {
         });
         return list;
       }
-
       return arr;
     }
   },
@@ -314,7 +322,11 @@ export default {
   padding: 10px;
   position: fixed;
   z-index: 99;
-  bottom: 0;
+  .close-btn{
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
 }
 .goods-box {
   padding-bottom: 180px;
@@ -336,6 +348,7 @@ export default {
 
 .info-box {
   padding-right: 20px;
+  padding-top: 20px;
   .basci-info,
   .eq-info {
     display: flex;
