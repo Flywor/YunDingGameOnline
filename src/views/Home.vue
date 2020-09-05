@@ -1,15 +1,5 @@
 <template>
   <div class="home">
-    <div v-show="showMoling">
-      <div class="moling" :style="{ left: '50%', fontSize: '80px', animation: 'molingframe 1s linear 0s infinite' }">魔灵现世</div>
-      <div
-        v-for="(m, i) in molingPosition"
-        :key="m"
-        class="moling"
-        :style="{ top: `${(i + 1) * 130}px`, left: '50%', animation: 'molingframe 1s linear 1s infinite' }">
-        {{m}}
-      </div>
-    </div>
     <Form
       ref="formInline"
       :model="formInline"
@@ -45,9 +35,6 @@
       </FormItem>
       <FormItem>
         <Input v-if="openDm" search enter-button="发送" placeholder="快来发送弹幕吧" @on-search="handleSendChat" v-model="sendMsg"/>
-      </FormItem>
-      <FormItem v-if="nextMoling">
-        魔灵将在<Time :time="nextMoling" :interval="999999999"/>出现
       </FormItem>
     </Form>
     <div class="card-container">
@@ -159,10 +146,7 @@ export default {
       skillMap: {},
       showMonsterMap: false,
       showScreensContent: false,
-      screens: [],
-      showMoling: false,
-      nextMoling: null,
-      molingPosition: []
+      screens: []
     }
   },
   watch: {
@@ -172,11 +156,6 @@ export default {
         if (length === 0) return
         const dm = this.msgList[length - 1]
         if (this.msgDm.some(md => md.msg === dm.msg)) return
-        if (dm.msg.indexOf("<span style='color:red;'>魔灵</span>") > -1) {
-          try {
-            this.molingPosition.push(dm.msg.replace(/<[^>]+>/g, '').split(' ').pop());
-          } catch (e) { console.error(e); }
-        }
         dm.top = this.randomNum(0, this.dmline)
         dm.color = this.getDmColor(dm)
         this.msgDm.push(dm)
@@ -220,23 +199,8 @@ export default {
       });
     });
     this.skillMap = skillMap;
-
-    this.checkMoling();
   },
   methods: {
-    checkMoling () {
-      let nextMoling = Number(new Date(new Date().toLocaleDateString()).getTime() + 15 * 60 * 60 * 1000)
-      if (now > nextMoling) {
-        if ((now - nextMoling) < (5 * 60 * 1000)) {
-          this.showMoling = true;
-        } else {
-          this.showMoling = false;
-        }
-        nextMoling += 24 * 60 * 60 * 1000;
-      }
-      this.nextMoling = nextMoling;
-      setTimeout(() => this.checkMoling(), 1000);
-    },
     handleSCKEYChange () {
       localStorage.setItem('sckey', this.SCKEY);
     },

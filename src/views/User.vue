@@ -581,6 +581,8 @@ export default {
           catchSkills: user.catchSkills,
           catchPetBySkill: user.catchPetBySkill,
           catchPet: user.catchPet,
+          catchSuccess: user.catchSuccess || 0,
+          catchFail: user.catchFail || 0,
           isCompose: user.isCompose
         })
       );
@@ -637,8 +639,16 @@ export default {
         if (ra.a_skill_type === 1) {
           if (ra.mark.indexOf('成功') > 1) {
             this.game.getMyPet();
+            // 记录捕捉成功和失败数据，用来嘲讽作者
+            if (!this.user.catchSuccess) { this.user.catchSuccess = 0; }
+            this.user.catchSuccess++;
           }
-          if (ra.mark.indexOf('mp不足') > 1) {
+          if (ra.mark.indexOf('失败') > 1) {
+            if (!this.user.catchFail) { this.user.catchFail = 0; }
+            this.user.catchFail++;
+          }
+          if (ra.mark.indexOf('mp不足') > 1 || ra.mark.indexOf('无法捕捉') > 1) {
+            this.$Message.info('自动切换技能攻击早点结束');
             this.game.roundOperating(
                 this.user.skilltype || '1',
                 this.user.skillid || '1',
@@ -660,7 +670,7 @@ export default {
       })
 
       if (data.die_arr && data.die_arr.length) {
-        data.msg.push(data.die_arr.map((da) => `${da}卒`).join(","));
+        data.msg.push(`死亡单位【${data.die_arr.map((da) => `${da}`).join(",")}】`);
       }
 
       if (data.win === 1) {
@@ -696,7 +706,6 @@ export default {
         });
       }
       if (data.win === 2) {
-        data.msg.push("你死了");
         this.fightGains.fightCount++;
       }
 
@@ -751,6 +760,7 @@ export default {
         this.$Message.success(`正在挥动洛阳铲`);
         this.game.wbt(cbt.btId);
       }
+      await sleep(1000);
       this.$Modal.info({
         render: () => (
           <div>

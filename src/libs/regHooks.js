@@ -264,7 +264,7 @@ export default function (_app) {
         const catchList = user.catchType ? user.catchPetBySkill: user.catchPet;
         // 匹配捕捉的宠物名称
         if (catchList && catchList.includes) {
-            catchTarget = battleUnit.find(bu => catchList.includes(bu.name.replace(/<[^>]+>/g, '')))
+            catchTarget = battleUnit.find(bu => catchList.includes(bu.name.replace(/<[^>]+>/g, '')));
         }
         if (catchTarget) {
             this.roundOperating(
@@ -679,7 +679,7 @@ export default function (_app) {
             return;
         }
 
-        app.$set(app.user, 'myPets', data.data.data);
+        app.$set(app.user, 'myPets', data.data.data.sort((a, b) => (b.skill || []).length - (a.skill || []).length));
     }
     getMyPetCb.hookMark = "regHooks.getMyPetCb";
     GameApi.regHookHandlers['connector.userHandler.getMyPet'].push(getMyPetCb);

@@ -57,8 +57,8 @@
                 v-for="(value,key) in readToUse.eq_info"
                 :key="key"
               >
-                <span :style="key | addStyle">{{key}}:</span>
-                <span :style="key | addStyle">{{value}}</span>
+                <span :style="key | addStyle_mixin">{{key}}:</span>
+                <span :style="key | addStyle_mixin">{{value}}</span>
               </span>
             </div>
           </template>

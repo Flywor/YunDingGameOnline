@@ -2,7 +2,7 @@
   <div>
     <div class="br" />
     捕捉指定
-    <i-switch v-model="user.catchType" size="large" true-color="#2db7f5" false-color="#2d8cf0">
+    <i-switch v-model="user.catchType" size="large" true-color="#2db7f5" false-color="#2d8cf0" :disabled="user.isCompose">
       <span slot="open">技能</span>
       <span slot="close">宠物</span>
     </i-switch>
@@ -30,6 +30,12 @@
       </Option>
     </Select>
     <div class="br" />
+    <p>
+      <label v-if="user.catchType && user.catchPetBySkill && user.catchPetBySkill.length > 0">
+        捕捉目标：【{{user.catchPetBySkill.join('，')}}】，
+      </label>
+      历史捕捉成功率：【{{catchRate}}%】
+    </p>
   </div>
 </template>
 <script>
@@ -55,6 +61,9 @@ export default {
         });
       });
       return Object.keys(skillMap);
+    },
+    catchRate () {
+      return ((user.catchSuccess || 0) / (user.catchFail || 1) * 100).toFixed(2)
     }
   },
   watch: {
@@ -92,8 +101,25 @@ export default {
             }
           });
         this.user.catchPetBySkill = catchPetBySkill;
-        console.log(catchSkillCopy, catchPetBySkill);
       }
+    },
+    async 'user.myPets.length' () {
+      if (!this.user.isCompose) return;
+      const myPets = this.user.myPets;
+      const catchSkills = this.user.catchSkills;
+      let discardFlag = false;
+      for (let i = 0; i < myPets.length; i++) {
+        const pet = myPets[i];
+        // 放生没技能 或 没有要的技能
+        if ((!pet.skill || pet.skill.length === 0) || !pet.skill.some(skl => catchSkills.includes(skl.name))) {
+          if (this.discardPet(pet, '没有要的技能')) {
+            discardFlag = true;
+          }
+        }
+      }
+      await sleep(1000);
+      if (discardFlag) return;
+      this.composePet();
     }
   },
   async mounted () {
@@ -115,10 +141,6 @@ export default {
         }
     });
     this.screenMonsterMap = screenMonsterMap;
-    if (this.user.isCompose) {
-      this.handleAutoChange(this.user.isCompose);
-      this.discardPetInterval();
-    }
   },
   methods: {
     // 检查当前副本有没有要捉的宠物
@@ -127,11 +149,12 @@ export default {
       const monsterList = this.screenMonsterMap.filter(smm => smm.screenName === this.user.combatName);
       return monsterList.some(ml => petList.includes(ml.monsterName));
     },
-    // 检查当前副本能抓到的技能
+    // 检查当前副本指定宠物能抓到的技能
     checkScreenHasSkill () {
       const obj = {};
+      const catchList = this.user.catchPetBySkill;
       this.screenMonsterMap
-        .filter(smm => smm.screenName === this.user.combatName)
+        .filter(smm => smm.screenName === this.user.combatName && catchList.includes(smm.monsterName))
         .map(smm => smm.skill.map(skl => obj[skl.name] = true ));
       return Object.keys(obj);
     },
@@ -144,28 +167,34 @@ export default {
       let screenId;
       if (petId) {
         // 查找还没抓到的技能的宠物
-        const pet = this.user.myPets.find(pet => pet._id === petId);
         const catchSkills = this.user.catchSkills;
+        const catchList = this.user.catchPetBySkill;
+        const pet = this.user.myPets.find(pet => pet._id === petId);
         const skills = pet.skill.map(skl => skl.name);
         let nextSkill;
         catchSkills.map(cs => {
-          if (!skill.includes(cs)) {
+          if (!skills.includes(cs)) {
             nextSkill = cs;
           }
         });
-        console.log(nextSkill);
         if (!nextSkill) {
           this.switchCombat();
+          return;
         }
-        const monsterScreen = this.screenMonsterMap.find(smm => smm.skill.some(skl => skl.name === nextSkill));
+        const monsterScreen = this.screenMonsterMap.find(smm => smm.skill.some(skl => skl.name === nextSkill) && catchList.includes(smm.monsterName));
         screenId = monsterScreen.screenId;
+        this.$Message.info(`下一个要抓的技能是【${nextSkill}】，去【${monsterScreen.screenName}】`);
+        console.log(`下一个要抓的技能是【${nextSkill}】，去【${monsterScreen.screenName}】`);
       } else {
         screenId = this.checkPetInScreen(this.user.catchPetBySkill[0]);
+        this.$Message.info(`回到第一个技能重新抓`);
+        console.log(`回到第一个技能重新抓`);
       }
       this.user.team.combat = screenId;
       this.game.switchCombatScreen(screenId);
     },
     async handleAutoChange (flag) {
+      if (!flag) return;
       const catchList = this.user.catchPetBySkill;
       if (!catchList || catchList.length === 0) {
         this.$Message.warning('还没设置捕捉');
@@ -185,40 +214,28 @@ export default {
       }
       if (this.checkScreenHasPet(catchList) === false){
         this.$Message.warning('当前副本没有符合捕捉条件的宠物，正在切换');
+        console.log('当前副本没有符合捕捉条件的宠物，正在切换');
         this.switchCombat();
       }
+      await sleep(1000);
+      this.game.showMyTeam(0);
     },
-    async discardPetInterval () {
-      this.game.getMyPet();
-      await sleep(6000);
-      const myPets = this.user.myPets;
-      const catchSkills = this.user.catchSkills;
-      let discardFlag = false;
-      for (let i = 0; i < myPets.length; i++) {
-        const pet = myPets[i];
-        // 放生没技能 或 没有要的技能
-        if ((!pet.skill || pet.skill.length === 0) || !pet.skill.some(skl => catchSkills.includes(skl.name))) {
-          this.game.upUserPetLevel(pet._id, 3);
-          await sleep(1000);
-          this.$Message.info(`丢弃${pet.name}技能为【${(pet.skill || []).map(sk => sk.name).join(',') || '空'}】`);
-          // 标记丢过
-          discardFlag = true;
-          // 一次只处理一只
-          break;
-        }
+    // 丢宠判断
+    discardPet (pet, reason) {
+      if (pet.type == 3 || (pet.skill || []).length >= 6) {
+        // 不丢神兽  不丢5技能以上的
+        return false;
       }
-      if (!discardFlag && myPets.length >= 2) {
-        console.log('不丢宠而且数量够了，就去合成');
-        await this.composePet();
-      }
-      this.discardPetInterval();
+      this.$Message.info(`丢弃${pet.name}【${(pet.skill || []).map(sk => sk.name).join(',') || '空'}】，原因【${reason}】`);
+      console.log(`丢弃${pet.name}【${(pet.skill || []).map(sk => sk.name).join(',') || '空'}】，原因【${reason}】`);
+      this.game.upUserPetLevel(pet._id, 3);
+      return true;
     },
     async composePet () {
       const myPets = this.user.myPets;
       const catchSkills = this.user.catchSkills;
       const screenSkill = this.checkScreenHasSkill();
       const composeSkill = screenSkill.filter(ss => catchSkills.includes(ss));
-      console.log('本地图要抓的技能：', composeSkill);
       let pet1, pet2;
       for (let i = 0; i < myPets.length; i++) {
         const pet = myPets[i];
@@ -231,8 +248,15 @@ export default {
           }
         });
         if (flag) {
-          console.log(`已经合成一只满足技能的宠【${skills.join(',')}】`)
-          return;
+          // this.$Message.success(`已经合成一只满足技能的宠【${skills.join(',')}】，正在停止所有设置`)
+          // console.log(`已经合成一只满足技能的宠【${skills.join(',')}】`)
+          // this.$set(this.user, 'fighting', false);
+          // this.$set(this.user, 'isCompose', false);
+          // this.$Message.success(`脚本完成`)
+          continue;
+        } else if (pet.type == 3) {
+          // 避免神兽被拿来合成
+          continue;
         }
         // 判断拥有这个地图所有能抓的技能
         flag = true;
@@ -241,23 +265,31 @@ export default {
             flag = false;
           }
         });
-        if (flag) {
+        if (flag && i === 0) {
+          this.$Message.success(`这个地图所有能抓的都抓了【${skills.join(',')}】`)
           console.log(`这个地图所有能抓的都抓了【${skills.join(',')}】`)
           this.switchCombat(pet._id);
           return;
         }
         // 如果技能不齐，就跟下一个不齐的合成
         if (!pet1) {
-          pet1 = pet._id;
+          pet1 = pet;
         } else if (!pet2) {
-          pet2 = pet._id;
+          const pt1Skills = pet1.skill.map(skl => skl.name);
+          if (skills.some(skl => !pt1Skills.includes(skl) && composeSkill.includes(skl))) {
+            pet2 = pet;
+          } else if (i >= 15) {
+            this.discardPet(pet, '技能重复');
+          }
         }
         if (pet1 && pet2) {
-          console.log(`合成${pet1}和${pet2}`)
-          this.game.fitPet(pet1, pet2);
+          this.$Message.info(`合成${pet1.name}和${pet2.name}`)
+          console.log(`合成${pet1.name}和${pet2.name}`)
+          this.game.fitPet(pet1._id, pet2._id);
           return;
         }
       }
+      this.$Message.warning('没得合成，继续抓吧');
     }
   }
 }
