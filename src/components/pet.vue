@@ -7,7 +7,7 @@
     >
       <TabPane
         v-for="(item, index) in petsInfo"
-        :key="`${index}-${item._id}`"
+        :key="index"
         :label="`${item.name}(${item.skills.length})`"
         :name="`name${index+1}`"
       >

@@ -117,8 +117,8 @@ export default {
           }
         }
       }
-      await sleep(1000);
       if (discardFlag) return;
+      await sleep(~~(Math.random() * 10 * 1000) + 1000);
       this.composePet();
     }
   },
@@ -141,6 +141,7 @@ export default {
         }
     });
     this.screenMonsterMap = screenMonsterMap;
+    this.handleAutoChange(this.user.isCompose);
   },
   methods: {
     // 检查当前副本有没有要捉的宠物
@@ -265,7 +266,7 @@ export default {
             flag = false;
           }
         });
-        if (flag && i === 0) {
+        if (flag) {
           this.$Message.success(`这个地图所有能抓的都抓了【${skills.join(',')}】`)
           console.log(`这个地图所有能抓的都抓了【${skills.join(',')}】`)
           this.switchCombat(pet._id);
@@ -278,7 +279,7 @@ export default {
           const pt1Skills = pet1.skill.map(skl => skl.name);
           if (skills.some(skl => !pt1Skills.includes(skl) && composeSkill.includes(skl))) {
             pet2 = pet;
-          } else if (i >= 15) {
+          } else if (i >= 9) {
             this.discardPet(pet, '技能重复');
           }
         }
