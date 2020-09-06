@@ -211,15 +211,15 @@ export default {
       }
       if (!this.user.fighting) {
         this.$set(this.user, 'fighting', true);
-        this.game.startCombat(this.user.team.combat);
       }
       if (this.checkScreenHasPet(catchList) === false){
         this.$Message.warning('当前副本没有符合捕捉条件的宠物，正在切换');
         console.log('当前副本没有符合捕捉条件的宠物，正在切换');
         this.switchCombat();
+        await sleep(1000);
       }
-      await sleep(1000);
       this.game.showMyTeam(0);
+      this.game.startCombat(this.user.team.combat);
     },
     // 丢宠判断
     discardPet (pet, reason) {
