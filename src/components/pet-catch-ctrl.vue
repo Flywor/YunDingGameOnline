@@ -221,6 +221,7 @@ export default {
       }
       this.game.showMyTeam(0);
       this.game.startCombat(this.user.team.combat);
+      this.game.getMyPet();
     },
     // 丢宠判断
     discardPet (pet, reason) {
