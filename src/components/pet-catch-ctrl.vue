@@ -191,6 +191,9 @@ export default {
       }
       this.user.team.combat = screenId;
       this.game.switchCombatScreen(screenId);
+      setTimeout(() => {
+        window.location.reload();
+      }, 30 * 60 * 1000 + (Math.random()*30*1000));
     },
     async handleAutoChange (flag) {
       if (!flag) return;
@@ -247,11 +250,13 @@ export default {
           }
         });
         if (flag) {
-          // this.$Message.success(`已经合成一只满足技能的宠【${skills.join(',')}】，正在停止所有设置`)
-          // console.log(`已经合成一只满足技能的宠${pet.name}【${skills.join(',')}】`)
-          // this.$set(this.user, 'fighting', false);
-          // this.$set(this.user, 'isCompose', false);
-          // this.$Message.success(`脚本完成`)
+          if (i >= 9) {
+            this.$Message.success(`已经合成好多只了，自动停止脚本`);
+            console.log(`合成脚本完成`, Date.now(), this.user.email);
+            this.$set(this.user, 'fighting', false);
+            this.$set(this.user, 'isCompose', false);
+            return
+          }
           continue;
         } else if (pet.type == 3) {
           // 避免神兽被拿来合成
