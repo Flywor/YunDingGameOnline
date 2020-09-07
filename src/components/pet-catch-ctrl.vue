@@ -72,6 +72,7 @@ export default {
       handler (cs) {
         if (this.screenMonsterMap.length === 0) return;
         const catchSkillCopy = JSON.parse(JSON.stringify(cs || []));
+        if (catchSkillCopy.length === 0) return;
         const catchPetBySkill = [];
         // 匹配包含选择技能最多的怪，没有就一只一只抓
         this.screenMonsterMap
@@ -87,7 +88,6 @@ export default {
           })
           .sort((a, b) => b.tempCount - a.tempCount)
           .map(smm => {
-            if (catchSkillCopy.length === 0) return;
             let flag = false;
             smm.skill.map(sk => {
               let index = catchSkillCopy.findIndex(csc => csc === sk.name);
@@ -97,27 +97,23 @@ export default {
               }
             });
             if (flag) {
-              catchPetBySkill.push(smm.monsterName);
+              catchPetBySkill.push(smm);
             }
           });
-        this.user.catchPetBySkill = catchPetBySkill;
+        this.user.catchPetBySkill = catchPetBySkill.sort((a, b) => a.monsterLevel - b.monsterLevel).map(smm => smm.monsterName);
       }
     },
     async 'user.myPets.length' () {
       if (!this.user.isCompose) return;
       const myPets = this.user.myPets;
       const catchSkills = this.user.catchSkills;
-      let discardFlag = false;
       for (let i = 0; i < myPets.length; i++) {
         const pet = myPets[i];
         // 放生没技能 或 没有要的技能
         if ((!pet.skill || pet.skill.length === 0) || !pet.skill.some(skl => catchSkills.includes(skl.name))) {
-          if (this.discardPet(pet, '没有要的技能')) {
-            discardFlag = true;
-          }
+          this.discardPet(pet, '没有要的技能');
         }
       }
-      if (discardFlag) return;
       await sleep(~~(Math.random() * 10 * 1000) + 1000);
       this.composePet();
     }
@@ -136,6 +132,7 @@ export default {
             screenName: screen.name,
             monsterId: ml._id,
             monsterName: ml.name,
+            monsterLevel: ml.level,
             skill: ml.skill
           });
         }
@@ -174,7 +171,8 @@ export default {
         const skills = pet.skill.map(skl => skl.name);
         let nextSkill;
         catchSkills.map(cs => {
-          if (!skills.includes(cs)) {
+          // 强调顺序
+          if (!skills.includes(cs) && !nextSkill) {
             nextSkill = cs;
           }
         });
@@ -188,8 +186,8 @@ export default {
         console.log(`下一个要抓的技能是【${nextSkill}】，去【${monsterScreen.screenName}】`);
       } else {
         screenId = this.checkPetInScreen(this.user.catchPetBySkill[0]);
-        this.$Message.info(`回到第一个技能重新抓`);
-        console.log(`回到第一个技能重新抓`);
+        this.$Message.info(`回到捕获目标第一只宠物重新抓`);
+        console.log(`回到捕获目标第一只宠物重新抓`);
       }
       this.user.team.combat = screenId;
       this.game.switchCombatScreen(screenId);
@@ -250,7 +248,7 @@ export default {
         });
         if (flag) {
           // this.$Message.success(`已经合成一只满足技能的宠【${skills.join(',')}】，正在停止所有设置`)
-          // console.log(`已经合成一只满足技能的宠【${skills.join(',')}】`)
+          // console.log(`已经合成一只满足技能的宠${pet.name}【${skills.join(',')}】`)
           // this.$set(this.user, 'fighting', false);
           // this.$set(this.user, 'isCompose', false);
           // this.$Message.success(`脚本完成`)
@@ -266,9 +264,10 @@ export default {
             flag = false;
           }
         });
-        if (flag) {
+        if (!pet1 && flag) {
           this.$Message.success(`这个地图所有能抓的都抓了【${skills.join(',')}】`)
           console.log(`这个地图所有能抓的都抓了【${skills.join(',')}】`)
+          await sleep(~~(Math.random() * 10 * 1000) + 1000);
           this.switchCombat(pet._id);
           return;
         }
@@ -277,15 +276,17 @@ export default {
           pet1 = pet;
         } else if (!pet2) {
           const pt1Skills = pet1.skill.map(skl => skl.name);
-          if (skills.some(skl => !pt1Skills.includes(skl) && composeSkill.includes(skl))) {
+          if (skills.some(skl => !pt1Skills.includes(skl) && catchSkills.includes(skl))) {
             pet2 = pet;
           } else if (i >= 9) {
             this.discardPet(pet, '技能重复');
           }
         }
         if (pet1 && pet2) {
-          this.$Message.info(`合成${pet1.name}和${pet2.name}`)
-          console.log(`合成${pet1.name}和${pet2.name}`)
+          this.$Message.info(`合成${pet1.name}【${pet1.skill.map(skl => skl.name).join('，')}】和${pet2.name}【${pet2.skill.map(skl => skl.name).join('，')}】`)
+          console.log(`合成${pet1.name}【${pet1.skill.map(skl => skl.name).join('，')}】和${pet2.name}【${pet2.skill.map(skl => skl.name).join('，')}】`)
+          console.log(`本图合成目标【${composeSkill.join(',')}】`)
+          await sleep(~~(Math.random() * 10 * 1000) + 1000);
           this.game.fitPet(pet1._id, pet2._id);
           return;
         }

@@ -373,7 +373,7 @@ export default function (_app) {
                         goodsType = '大补丹';
                         break;
                     default:
-                        console.log(`这个${good.name}俺不知道是什么类型`)
+                        // console.log(`这个${good.name}俺不知道是什么类型`)
                         break;
                 }
                 // 解析宝图位置
