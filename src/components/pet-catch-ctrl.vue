@@ -276,7 +276,6 @@ export default {
         if (!pet1 && flag) {
           this.$Message.success(`这个地图所有能抓的都抓了【${skills.join(',')}】`)
           console.log(`这个地图所有能抓的都抓了【${skills.join(',')}】`)
-          await sleep(~~(Math.random() * 10 * 1000) + 1000);
           this.switchCombat(pet._id);
           return;
         }
@@ -295,7 +294,6 @@ export default {
           this.$Message.info(`合成${pet1.name}【${pet1.skill.map(skl => skl.name).join('，')}】和${pet2.name}【${pet2.skill.map(skl => skl.name).join('，')}】`)
           console.log(`合成${pet1.name}【${pet1.skill.map(skl => skl.name).join('，')}】和${pet2.name}【${pet2.skill.map(skl => skl.name).join('，')}】`)
           console.log(`本图合成目标【${composeSkill.join(',')}】`)
-          await sleep(~~(Math.random() * 10 * 1000) + 1000);
           this.game.fitPet(pet1._id, pet2._id);
           return;
         }
