@@ -102,20 +102,6 @@ export default {
           });
         this.user.catchPetBySkill = catchPetBySkill.sort((a, b) => a.monsterLevel - b.monsterLevel).map(smm => smm.monsterName);
       }
-    },
-    async 'user.myPets.length' () {
-      if (!this.user.isCompose) return;
-      const myPets = this.user.myPets;
-      const catchSkills = this.user.catchSkills;
-      for (let i = 0; i < myPets.length; i++) {
-        const pet = myPets[i];
-        // 放生没技能 或 没有要的技能
-        if ((!pet.skill || pet.skill.length === 0) || !pet.skill.some(skl => catchSkills.includes(skl.name))) {
-          this.discardPet(pet, '没有要的技能');
-        }
-      }
-      await sleep(~~(Math.random() * 10 * 1000) + 1000);
-      this.composePet();
     }
   },
   async mounted () {
@@ -191,9 +177,6 @@ export default {
       }
       this.user.team.combat = screenId;
       this.game.switchCombatScreen(screenId);
-      setTimeout(() => {
-        window.location.reload();
-      }, 30 * 60 * 1000 + (Math.random()*30*1000));
     },
     async handleAutoChange (flag) {
       if (!flag) return;
@@ -222,6 +205,10 @@ export default {
       this.game.showMyTeam(0);
       this.game.startCombat(this.user.team.combat);
       this.game.getMyPet();
+      this.loopPetCheck();
+      // setTimeout(() => {
+      //   window.location.reload();
+      // }, 30 * 60 * 1000 + (Math.random()*30*1000));
     },
     // 丢宠判断
     discardPet (pet, reason) {
@@ -233,6 +220,22 @@ export default {
       console.log(`丢弃${pet.name}【${(pet.skill || []).map(sk => sk.name).join(',') || '空'}】，原因【${reason}】`);
       this.game.upUserPetLevel(pet._id, 3);
       return true;
+    },
+    // 循环判断合宠
+    async loopPetCheck () {
+      await sleep(6000);
+      if (!this.user.isCompose) return;
+      const myPets = this.user.myPets;
+      const catchSkills = this.user.catchSkills;
+      for (let i = 0; i < myPets.length; i++) {
+        const pet = myPets[i];
+        // 放生没技能 或 没有要的技能
+        if ((!pet.skill || pet.skill.length === 0) || !pet.skill.some(skl => catchSkills.includes(skl.name))) {
+          this.discardPet(pet, '没有要的技能');
+        }
+      }
+      this.composePet();
+      this.loopPetCheck();
     },
     async composePet () {
       const myPets = this.user.myPets;
@@ -297,7 +300,6 @@ export default {
           return;
         }
       }
-      this.$Message.warning('没得合成，继续抓吧');
     }
   }
 }
