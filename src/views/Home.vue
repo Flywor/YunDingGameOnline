@@ -83,17 +83,10 @@
     <Drawer
       v-model="showSkillMap"
       :mask="false"
-      width="500px"
+      width="300px"
       title="技能图鉴"
     >
-      <Alert
-        v-for="(value,key) in skillMap"
-        :key="key"
-        style="margin-bottom: 8px;"
-      >
-        {{key}}
-        【{{value}}】
-      </Alert>
+      <SkillMapComponent :skillMap="skillMap" />
     </Drawer>
     <Drawer
       v-model="showScreensContent"
@@ -122,10 +115,11 @@ let lastServerChanSend = 0;
 
 import ScreensComponent from '@components/screens.vue';
 import MonsterMapComponent from '@components/monster-map.vue';
+import SkillMapComponent from '@components/skill-map.vue';
 import { sleep, randomNum } from "@libs/tools";
 export default {
   name: 'Home',
-  components: { ScreensComponent, MonsterMapComponent },
+  components: { ScreensComponent, MonsterMapComponent, SkillMapComponent },
   data () {
     return {
       randomNum,
@@ -195,9 +189,10 @@ export default {
     const skillMap = {};
     mdata.map(md => {
       md.skill && md.skill.map(sk => {
-        skillMap[sk.name] = sk.info;
+        skillMap[sk.name] = sk;
       });
     });
+    console.log(skillMap)
     this.skillMap = skillMap;
   },
   methods: {

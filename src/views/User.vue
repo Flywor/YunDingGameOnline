@@ -637,24 +637,26 @@ export default {
       this.fightGains.roundCount++;
       data.msg = data.round_arr.map(ra => {
         if (ra.a_skill_type === 1) {
-          if (ra.mark.indexOf('成功') > 1) {
-            this.game.getMyPet();
-            // 记录捕捉成功和失败数据，用来嘲讽作者
-            if (!this.user.catchSuccess) { this.user.catchSuccess = 0; }
-            this.user.catchSuccess++;
-          }
-          if (ra.mark.indexOf('失败') > 1) {
-            if (!this.user.catchFail) { this.user.catchFail = 0; }
-            this.user.catchFail++;
-          }
-          if (ra.mark.indexOf('mp不足') > 1 || ra.mark.indexOf('无法捕捉') > 1) {
-            this.$Message.info('自动切换技能攻击早点结束');
-            this.game.roundOperating(
-                this.user.skilltype || '1',
-                this.user.skillid || '1',
-                '',
-                this.user.team ? this.user.team._id : ''
-            );
+          if (ra.mark.indexOf(this.user.email) > -1) {
+            if (ra.mark.indexOf('成功') > 1) {
+              this.game.getMyPet();
+              // 记录捕捉成功和失败数据，用来嘲讽作者
+              if (!this.user.catchSuccess) { this.user.catchSuccess = 0; }
+              this.user.catchSuccess++;
+            }
+            if (ra.mark.indexOf('失败') > 1) {
+              if (!this.user.catchFail) { this.user.catchFail = 0; }
+              this.user.catchFail++;
+            }
+            if (ra.mark.indexOf('mp不足') > 1 || ra.mark.indexOf('无法捕捉') > 1) {
+              this.$Message.info('自动切换技能攻击早点结束');
+              this.game.roundOperating(
+                  this.user.skilltype || '1',
+                  this.user.skillid || '1',
+                  '',
+                  this.user.team ? this.user.team._id : ''
+              );
+            }
           }
           return ra.mark;
         }

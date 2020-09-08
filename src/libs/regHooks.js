@@ -264,7 +264,7 @@ export default function (_app) {
         const catchList = user.catchType ? user.catchPetBySkill: user.catchPet;
         // 匹配捕捉的宠物名称
         if (catchList && catchList.includes) {
-            catchTarget = battleUnit.find(bu => catchList.includes(bu.name.replace(/<[^>]+>/g, '')));
+            catchTarget = battleUnit.find(bu => bu.team === 2 && catchList.includes(bu.name.replace(/<[^>]+>/g, '')));
         }
         if (catchTarget) {
             this.roundOperating(
