@@ -72,7 +72,10 @@ export default {
       handler (cs) {
         if (this.screenMonsterMap.length === 0) return;
         const catchSkillCopy = JSON.parse(JSON.stringify(cs || []));
-        if (catchSkillCopy.length === 0) return;
+        if (catchSkillCopy.length === 0) {
+          this.user.catchPetBySkill = [];
+          return;
+        }
         const catchPetBySkill = [];
         // 匹配包含选择技能最多的怪，没有就一只一只抓
         this.screenMonsterMap
@@ -169,11 +172,9 @@ export default {
         const monsterScreen = this.screenMonsterMap.find(smm => smm.skill.some(skl => skl.name === nextSkill) && catchList.includes(smm.monsterName));
         screenId = monsterScreen.screenId;
         this.$Message.info(`下一个要抓的技能是【${nextSkill}】，去【${monsterScreen.screenName}】`);
-        console.log(`下一个要抓的技能是【${nextSkill}】，去【${monsterScreen.screenName}】`);
       } else {
         screenId = this.checkPetInScreen(this.user.catchPetBySkill[0]);
         this.$Message.info(`回到捕获目标第一只宠物重新抓`);
-        console.log(`回到捕获目标第一只宠物重新抓`);
       }
       this.user.team.combat = screenId;
       this.game.switchCombatScreen(screenId);
@@ -198,7 +199,6 @@ export default {
       }
       if (this.checkScreenHasPet(catchList) === false){
         this.$Message.warning('当前副本没有符合捕捉条件的宠物，正在切换');
-        console.log('当前副本没有符合捕捉条件的宠物，正在切换');
         this.switchCombat();
         await sleep(1000);
       }
@@ -206,18 +206,14 @@ export default {
       this.game.startCombat(this.user.team.combat);
       this.game.getMyPet();
       this.loopPetCheck();
-      // setTimeout(() => {
-      //   window.location.reload();
-      // }, 30 * 60 * 1000 + (Math.random()*30*1000));
     },
     // 丢宠判断
     discardPet (pet, reason) {
       if (pet.type == 3 || (pet.skill || []).length >= 6) {
-        // 不丢神兽  不丢5技能以上的
+        // 不丢神兽  不丢6技能以上的
         return false;
       }
       this.$Message.info(`丢弃${pet.name}【${(pet.skill || []).map(sk => sk.name).join(',') || '空'}】，原因【${reason}】`);
-      console.log(`丢弃${pet.name}【${(pet.skill || []).map(sk => sk.name).join(',') || '空'}】，原因【${reason}】`);
       this.game.upUserPetLevel(pet._id, 3);
       return true;
     },
@@ -254,7 +250,7 @@ export default {
           }
         });
         if (flag) {
-          if (i >= 9) {
+          if (i > 9) {
             this.$Message.success(`已经合成好多只了，自动停止脚本`);
             console.log(`合成脚本完成`, Date.now(), this.user.email);
             this.$set(this.user, 'fighting', false);
@@ -274,8 +270,7 @@ export default {
           }
         });
         if (!pet1 && flag) {
-          this.$Message.success(`这个地图所有能抓的都抓了【${skills.join(',')}】`)
-          console.log(`这个地图所有能抓的都抓了【${skills.join(',')}】`)
+          this.$Message.success(`这个地图所有能抓的都抓了【${composeSkill.join(',')}】`)
           this.switchCombat(pet._id);
           return;
         }
@@ -292,8 +287,6 @@ export default {
         }
         if (pet1 && pet2) {
           this.$Message.info(`合成${pet1.name}【${pet1.skill.map(skl => skl.name).join('，')}】和${pet2.name}【${pet2.skill.map(skl => skl.name).join('，')}】`)
-          console.log(`合成${pet1.name}【${pet1.skill.map(skl => skl.name).join('，')}】和${pet2.name}【${pet2.skill.map(skl => skl.name).join('，')}】`)
-          console.log(`本图合成目标【${composeSkill.join(',')}】`)
           this.game.fitPet(pet1._id, pet2._id);
           return;
         }

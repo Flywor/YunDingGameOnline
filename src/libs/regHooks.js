@@ -714,12 +714,12 @@ export default function (_app) {
 
     //宠物幻化
     let turnIntoPetCb = function (data) {
+        this.getMyPet();
         if (data.code != 200) {
             app.$Message.error(data.msg);
             return;
         }
         app.$Message.success(data.msg);
-        this.getMyPet()
     }
     turnIntoPetCb.hookMark = "regHooks.turnIntoPetCb";
     GameApi.regHookHandlers['connector.userHandler.turnIntoPet'].push(turnIntoPetCb);

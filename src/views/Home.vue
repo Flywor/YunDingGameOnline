@@ -192,7 +192,6 @@ export default {
         skillMap[sk.name] = sk;
       });
     });
-    console.log(skillMap)
     this.skillMap = skillMap;
   },
   methods: {

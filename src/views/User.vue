@@ -662,14 +662,23 @@ export default {
         }
         let trigger = '';
         if (ra.a_trigger.length > 0) {
-          trigger = '触发了【';
+          trigger = '【';
           trigger += ra.a_trigger.join('，');
-          trigger += '】';
+          trigger += '！！！】';
         }
-        return `【${ra.a_name}】${trigger}对【${ra.b_name}】使用了【${ra.process}】造成了【${ra.hurt
-              .map(Math.floor)
-              .join(",")}】伤害`
-      })
+        let belong = '';
+        if (ra.a_id != ra.a_name) {
+          belong = `${ra.a_id}的`;
+        }
+        const a = `${belong}${ra.a_name}`;
+        const b = `【${ra.b_name}】`;
+        const hurt = ra.hurt.map(Math.floor).join(",");
+        if (ra.hurt_type === 1) {
+          return `${a}：${ra.process}！${trigger}${b}随即受到了【${hurt}】点伤害`;
+        } else {
+          return `${a}：${ra.process}！${trigger}然后胸一甩，对${b}奶了一口[${hurt}]`;
+        }
+      });
 
       if (data.die_arr && data.die_arr.length) {
         data.msg.push(`死亡单位【${data.die_arr.map((da) => `${da}`).join(",")}】`);
