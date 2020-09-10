@@ -22,8 +22,8 @@
     </div>
     <div class="goods-box">
       <Badge
-        v-for="item in goods"
-        :key="item.id"
+        v-for="(item, index) in goods"
+        :key="`${item.id}-${index}`"
         :count="item.selected"
         overflow-count="999"
       >

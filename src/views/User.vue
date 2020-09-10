@@ -583,6 +583,7 @@ export default {
           catchPet: user.catchPet,
           catchSuccess: user.catchSuccess || 0,
           catchFail: user.catchFail || 0,
+          lockPet: user.lockPet,
           isCompose: user.isCompose
         })
       );

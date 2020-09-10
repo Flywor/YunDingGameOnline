@@ -8,7 +8,9 @@
     </i-switch>
     &nbsp;
     <template v-if="user.catchType">
-      <Select v-model="user.catchSkills" multiple size="small" style="max-width: 330px;">
+      <div class="br" />
+      选择技能：
+      <Select v-model="user.catchSkills" multiple size="small" style="max-width: 140px;">
         <Option
           v-for="skill in skillList"
           :value="skill"
@@ -18,17 +20,31 @@
         </Option>
       </Select>
       &nbsp;
+      锁定宠物：
+      <Select v-model="user.lockPet" multiple size="small" style="max-width: 140px;">
+        <Option
+          v-for="pet in user.myPets"
+          :value="pet._id"
+          :key="pet._id"
+        >
+          {{pet.name}}[{{pet.skill.map(skl => skl.name).join('，')}}]
+        </Option>
+      </Select>
+      &nbsp;
       <Checkbox v-model="user.isCompose" border @on-change="handleAutoChange">自动合成</Checkbox>
     </template>
-    <Select v-else v-model="user.catchPet" multiple size="small" style="max-width: 300px;">
-      <Option
-        v-for="screenMonster in screenMonsterMap"
-        :value="screenMonster.monsterName"
-        :key="screenMonster.monsterName"
-      >
-        {{screenMonster.monsterName}}
-      </Option>
-    </Select>
+    <template v-else>
+      选择宠物：
+      <Select v-model="user.catchPet" multiple size="small" style="max-width: 300px;">
+        <Option
+          v-for="screenMonster in screenMonsterMap"
+          :value="screenMonster.monsterName"
+          :key="screenMonster.monsterName"
+        >
+          {{screenMonster.monsterName}}
+        </Option>
+      </Select>
+    </template>
     <div class="br" />
     <p>
       <label v-if="user.catchType && user.catchPetBySkill && user.catchPetBySkill.length > 0">
@@ -67,6 +83,20 @@ export default {
     }
   },
   watch: {
+    'user.myPets': {
+      deep: true,
+      handler (mp) {
+        const lockPet = this.user.lockPet;
+        if (!mp || !lockPet) return;
+        const myPetIds = mp.map(m => m._id);
+        for (let i = 0; i < lockPet.length; i++) {
+          if (!myPetIds.includes(lockPet[i])) {
+            lockPet.splice(i, 1);
+            i--;
+          }
+        }
+      }
+    },
     'user.catchSkills': {
       deep: true,
       handler (cs) {
@@ -181,7 +211,11 @@ export default {
     },
     async handleAutoChange (flag) {
       if (!flag) return;
+      const lockPet = this.user.lockPet;
       const catchList = this.user.catchPetBySkill;
+      if (!lockPet || lockPet.length === 0) {
+        this.$Message.warning('检测到你没有锁定宠物，现在立刻取消自动合成还来得及');
+      }
       if (!catchList || catchList.length === 0) {
         this.$Message.warning('还没设置捕捉');
         return;
@@ -209,8 +243,9 @@ export default {
     },
     // 丢宠判断
     discardPet (pet, reason) {
-      if (pet.type == 3 || (pet.skill || []).length >= 6) {
-        // 不丢神兽  不丢6技能以上的
+      const lockPet = this.user.lockPet;
+      if ((lockPet && lockPet.includes(pet._id)) || pet.type == 3 || (pet.skill || []).length >= 6) {
+        // 不丢锁定   不丢神兽  不丢6技能以上的
         return false;
       }
       this.$Message.info(`丢弃${pet.name}【${(pet.skill || []).map(sk => sk.name).join(',') || '空'}】，原因【${reason}】`);
@@ -235,6 +270,7 @@ export default {
     },
     async composePet () {
       const myPets = this.user.myPets;
+      const lockPet = this.user.lockPet;
       const catchSkills = this.user.catchSkills;
       const screenSkill = this.checkScreenHasSkill();
       const composeSkill = screenSkill.filter(ss => catchSkills.includes(ss));
@@ -242,6 +278,10 @@ export default {
       for (let i = 0; i < myPets.length; i++) {
         const pet = myPets[i];
         const skills = pet.skill.map(skl => skl.name);
+        if ((lockPet && lockPet.includes(pet._id))) {
+          // 判断是否锁定
+          continue;
+        }
         // 判断拥有所有要的技能
         let flag = true;
         catchSkills.map(cs => {

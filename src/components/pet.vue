@@ -132,7 +132,7 @@
               v-for="item in petList"
               :disabled="[item.status,item.value,pet2] | disabled"
               :value="item.value"
-              :key="item.value"
+              :key="`pet1-${item.value}`"
             >{{item.label}}({{item.skills.length}})</Option>
           </Select>
           <p>技能：{{selectPet1}}</p>
@@ -144,7 +144,7 @@
               v-for="item in petList"
               :disabled="[item.status,item.value,pet1] | disabled"
               :value="item.value"
-              :key="item.value"
+              :key="`pet2-${item.value}`"
             >{{item.label}}({{item.skills.length}})</Option>
           </Select>
           <p>技能：{{selectPet2}}</p>
@@ -162,7 +162,7 @@
               v-for="item in petList"
               :disabled="[item.status,item.value,pet2] | disabled"
               :value="item.value"
-              :key="item.value"
+              :key="`ds1-${item.value}`"
             >{{ item.label }}</Option>
           </Select>
           <p>技能：{{selectPet1}}</p>
@@ -171,9 +171,9 @@
             size="small"
           >
             <Option
-              v-for="item in bookList"
+              v-for="(item, index) in bookList"
               :value="item.value"
-              :key="item.value"
+              :key="`ds2-${item.value}-${index}`"
             >{{ item.label }}</Option>
           </Select>
         </div>
