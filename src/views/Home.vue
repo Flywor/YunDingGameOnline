@@ -207,7 +207,7 @@ export default {
           // 队长判断
           if (user.isleader) {
             // 满队且自己队友加不进的情况下就解散队伍重组
-            const fullIndex = fullTeamLeader.findIndex(user.email);
+            const fullIndex = fullTeamLeader.findIndex(ftl => ftl == user.email);
             if (fullIndex > -1) {
               game.leaveTeam();
               fullTeamLeader.splice(fullIndex, 1);
