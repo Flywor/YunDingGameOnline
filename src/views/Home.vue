@@ -244,6 +244,7 @@ export default {
                   user.tempcombatid = undonePlan.value;
                   planCheckTimes++;
                 } else if (user.team.combat != undonePlan.value) {
+                  user.team.combat = undonePlan.value;
                   game.switchCombatScreen(undonePlan.value);
                 }
               } else {
