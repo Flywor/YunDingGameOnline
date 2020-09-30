@@ -241,7 +241,25 @@
             :key="item._id"
             @click.native="() => {
               user.team.combat = item._id;
+              user.tempcombat = item._id;
               game.switchCombatScreen(item._id);
+            }"
+          >{{item.name}}</DropdownItem>
+        </DropdownMenu>
+      </Dropdown>
+      <Dropdown v-if="user.combatId" trigger="click">
+        <Button
+          size="small"
+          type="info"
+        >
+          {{ user.tempcombatname || '未选择' }}
+        </Button>
+        <DropdownMenu slot="list">
+          <DropdownItem
+             v-for="item in user.screens"
+            :key="item._id"
+            @click.native="() => {
+              user.combatId = item._id;
             }"
           >{{item.name}}</DropdownItem>
         </DropdownMenu>
@@ -253,7 +271,7 @@
     <template v-if="user.team && user.team.leader === user.email">
       [{{ user.team.users.length || 1 }}/{{user.combatTotal || '未知'}}]
       <Button
-        @click="game.leaveTeam()"
+        @click="game.leaveTeam();user.isleader=false;"
         size="small"
         type="error"
       >
@@ -273,20 +291,26 @@
         <span slot="open">战斗</span>
         <span slot="close">平时</span>
       </i-switch>
+      <a @click="() => {
+        game.showMyTeam(0);
+      }">隐藏</a>
     </template>
     <template v-else-if="user.team">
       队长[{{user.team.leader}}]
       <Button
         size="small"
         type="warning"
-        @click="game.leaveTeam()"
+        @click="() => {
+          game.leaveTeam();
+          delete user.teamleader;
+        }"
       >
         离开
       </Button>
     </template>
     <template v-else>
       <Button
-        @click="game.createdTeam(user.map.id)"
+        @click="game.createdTeam(user.map.id);user.isleader=true;"
         size="small"
         type="success"
       >
@@ -306,6 +330,7 @@
             :key="item._id"
             @click.native="() => {
               game.addTeam(item._id);
+              user.teamleader = item.leader.nickname;
             }"
           >
             {{item.leader.nickname}}
@@ -467,6 +492,12 @@ export default {
               combatTotal = combat.player_num;
             }
           }
+          if (user.combatId) {
+            const tempcombat = user.screens.find(
+              (scr) => scr._id === user.combatId
+            );
+            user.tempcombatname = tempcombat.name
+          }
         }
         user.combatName = combatName;
         user.combatTotal = combatTotal;
@@ -551,7 +582,7 @@ export default {
       if (now - messageTime > 30000) {
         setTimeout(() => {
           window.location.reload();
-        }, ~~(Math.random()*60*1000)+30000);
+        }, ~~(Math.random()*60*1000));
       }
     }, 60000);
   },
@@ -577,6 +608,8 @@ export default {
           email: user.email,
           skillid: user.skillid,
           skillname: user.skillname,
+          tempcombat: user.tempcombat,
+          combatId: user.combatId,
           catchType: user.catchType,
           catchSkills: user.catchSkills,
           catchPetBySkill: user.catchPetBySkill,
@@ -584,7 +617,10 @@ export default {
           catchSuccess: user.catchSuccess || 0,
           catchFail: user.catchFail || 0,
           lockPet: user.lockPet,
-          isCompose: user.isCompose
+          isCompose: user.isCompose,
+          isleader: user.isleader,
+          teamleader: user.teamleader,
+          tempcombatid: user.tempcombatid
         })
       );
     },

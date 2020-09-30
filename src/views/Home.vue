@@ -24,9 +24,6 @@
         <Button type="primary" size="small" @click="showScreensContent = true">副本资料</Button>
       </FormItem>
       <FormItem>
-        <Input type="password" v-model="SCKEY" @on-change="handleSCKEYChange" placeholder="serverChan SCKEY" />
-      </FormItem>
-      <FormItem>
         弹幕
         <i-switch v-model="openDm">
           <span slot="open">开</span>
@@ -35,6 +32,22 @@
       </FormItem>
       <FormItem>
         <Input v-if="openDm" search enter-button="发送" placeholder="快来发送弹幕吧" @on-search="handleSendChat" v-model="sendMsg"/>
+      </FormItem>
+      <br />
+      <FormItem label="每日计划：" style="width:100%">
+        <CheckboxGroup v-model="dayPlan">
+          <Checkbox
+            v-for="option in dayPlanOptions"
+            :key="option.label"
+            border
+            :label="option.value"
+          >
+            {{option.label}}
+            <span v-if="option.isDone.length">
+              {{option.isDone.join(',')}}√
+            </span>
+          </Checkbox>
+        </CheckboxGroup>
       </FormItem>
     </Form>
     <div class="card-container">
@@ -79,7 +92,6 @@
         {{msg.nickname || '系统'}}：<label v-html="msg.msg" />
       </Tag>
     </div>
-    <iframe :src="serverChanUrl" v-if="serverChanUrl" @onload="serverChanUrl = null" style="display:none;"/>
     <Drawer
       v-model="showSkillMap"
       :mask="false"
@@ -134,13 +146,19 @@ export default {
       msgDm: [],
       sendMsg: '',
       dmline: 0,
-      SCKEY: localStorage.getItem('sckey'),
-      serverChanUrl: null,
       showSkillMap: false,
       skillMap: {},
       showMonsterMap: false,
       showScreensContent: false,
-      screens: []
+      screens: [],
+      dayPlan: [],
+      dayPlanOptions: [
+        { label: '荆棘之海', value: '5eecd6110ec93271652d2940', isDone: [] },
+        { label: '每日冒险', value: '5eef5927a447f4ad9b833648', isDone: [] },
+        { label: '深渊幻镜', value: '5ef9ff6669e97e5e22ccd5c5', isDone: [] },
+        { label: '宝藏山', value: '5efe93c6075268219ac2e630', isDone: [] },
+        { label: '鹊仙桥', value: '5f44e054e7c88d4126a9df14', isDone: [] }
+      ]
     }
   },
   watch: {
@@ -157,7 +175,7 @@ export default {
     }
   },
   mounted () {
-    // 加载历史账号
+    // 加载历史账号s
     const users = this.getStorageUser();
     const userList = []
     Object.keys(users).forEach((email) => {
@@ -170,20 +188,101 @@ export default {
       this.dmline = Math.floor(window.document.body.offsetHeight / 36) - 1
     })
 
-    // 每隔5分钟检测有没有队伍
+    let startTime = Date.now();
+    let planCheckTimes = 0;
+    // 每隔12秒检测有没有队伍
     setInterval(() => {
-      if (!this.SCKEY) return
-      const frames = this.$refs['userFrame']
-      const emptyTeamUser = []
+      // 每24个小时执行一次
+      if ((Date.now() - startTime) > 24 * 60 * 60 * 1000) { // 24 * 60 * 60 * 1000) {
+        this.dayPlanOptions.map(dpo => dpo.isDone = []);
+        startTime = Date.now();
+      }
+
+      const { dayPlan, dayPlanOptions } = this;
+      const frames = this.$refs['userFrame'];
+      const fullTeamLeader = [];
       frames.map(fms => {
-        const us = fms.contentWindow.user
-        if (!us.team) {
-          emptyTeamUser.push(us.email)
+        const { user, game } = fms.contentWindow
+        if (user.team) {
+          // 队长判断
+          if (user.isleader) {
+            // 满队且自己队友加不进的情况下就解散队伍重组
+            const fullIndex = fullTeamLeader.findIndex(user.email);
+            if (fullIndex > -1) {
+              game.leaveTeam();
+              fullTeamLeader.splice(fullIndex, 1);
+              return
+            }
+            // 没副本就切换副本
+            if (!user.combatName) {
+              user.team.combat = user.tempcombat;
+              game.switchCombatScreen(user.tempcombat);
+              user.fighting = true;
+              game.startCombat(user.team.combat);
+            }
+            if (user.combatId && user.team.users.length === 5) {
+              game.showMyTeam(0);
+            }
+
+            // 每日计划判断
+            if (dayPlan.length) {
+              const undonePlan = dayPlanOptions.find(dpo => dayPlan.includes(dpo.value) && !dpo.isDone.includes(user.email));
+              if (undonePlan) {
+                if (user.message && user.message.msg) {
+                  const msg = user.message.msg[user.message.msg.length - 1];
+                  if (msg.indexOf('达挑战上限，无奖励') > -1) {
+                    if (user.team.combat == undonePlan.value) {
+                      undonePlan.isDone.push(user.email);
+                    } else if (planCheckTimes > 4) {
+                      undonePlan.isDone.push(user.email);
+                      planCheckTimes = 0;
+                    }
+                  }
+                }
+                this.$Message.info(`【${user.email}】正在执行每日计划【${undonePlan.label}】`);
+                if (user.combatId) {
+                  user.tempcombatid = undonePlan.value;
+                  planCheckTimes++;
+                } else if (user.team.combat != undonePlan.value) {
+                  game.switchCombatScreen(undonePlan.value);
+                }
+              } else {
+                if (user.combatId) {
+                  delete user.tempcombatid;
+                } else if (user.team.combat != user.tempcombat) {
+                  game.switchCombatScreen(user.tempcombat);
+                }
+              }
+            }
+          }
+        } else if (user.map) {
+          // 队长判断
+          if (user.isleader) {
+            // 创建队伍
+            game.createdTeam(user.map.id);
+          }
+          // 队员判断
+          if (user.teamleader) {
+            // 获取队伍
+            game.getTeamList(user.map.id);
+            if (user.teams) {
+              // 找到队伍之后就加入队伍
+              const team = user.teams.find(t => t.leader.nickname === user.teamleader);
+              if (team) {
+                // 判断有没有满队，满队加不进，队长直接解散队伍
+                if (item.users.length == (item.combat || {}).player_num){
+                  if (!user.teamleader.includes(user.teamleader)) {
+                    fullTeamLeader.push(user.teamleader);
+                  }
+                } else {
+                  game.addTeam(team._id);
+                }
+              }
+            }
+          }
         }
       })
-      if (emptyTeamUser.length === 0) return
-      this.serverChanUrl = `https://sc.ftqq.com/${this.SCKEY}.send?text=来自夏影的温馨提醒&desp=你的这些账号[${emptyTeamUser.join('，')}]已经不在队伍里面，我怀疑已经掉线了`
-    }, 310000);
+    }, 12000);
 
     const mdata = window.monsterData.data;
     const skillMap = {};
@@ -195,9 +294,6 @@ export default {
     this.skillMap = skillMap;
   },
   methods: {
-    handleSCKEYChange () {
-      localStorage.setItem('sckey', this.SCKEY);
-    },
     frameLoad (index) {
       if (index != 0) return;
       this.msgList = this.$refs['userFrame'][0].contentWindow.chatMsg;
