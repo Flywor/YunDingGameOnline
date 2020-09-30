@@ -251,6 +251,7 @@ export default {
                 if (user.combatId) {
                   delete user.tempcombatid;
                 } else if (user.team.combat != user.tempcombat) {
+                  user.team.combat = user.tempcombat;
                   game.switchCombatScreen(user.tempcombat);
                 }
               }
