@@ -76,7 +76,7 @@ export default {
       });
       for (let i = 0; i < this.upSkillNum; i++) {
         this.game.repairUserArms(this.upSkillType);
-        await sleep(100);
+        await sleep(50);
       }
       this.game.userInfo();
       this.game.getMySkill();

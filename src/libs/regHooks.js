@@ -296,10 +296,6 @@ export default function (_app) {
         if (user.myInfo.mp_store < 5000) {
             this.byGoodsToSystem(2, '5eef5d140faad0b123d709c6');
         }
-        if ((user.myInfo.exp > user.myInfo.nextExp) && (user.myInfo.level < 49)) {
-            app.$Message.info('50级以下自动升级');
-            this.upPlayerLevel();
-        }
         if (user.fighting && user.team) {
             this.startCombat(user.tempcombatid || user.combatId || user.team.combat);
         }
