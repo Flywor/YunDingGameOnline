@@ -4,7 +4,7 @@
     class="user"
   >
     <p>
-      状态：{{user.status}}&nbsp;{{ user.status_msg && `${user.status_msg}` }}
+      状态：{{user.status}}&nbsp;{{ user.status_msg }}
       <ButtonGroup size="small" shape="circle">
         <Button
           size="small"

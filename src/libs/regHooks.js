@@ -42,17 +42,41 @@ export default function (_app) {
     GameApi.regHookHandlers['onLeave'].push(emptyCb);
     GameApi.regHookHandlers['onAdd'].push(emptyCb);
 
+    function sendValidateCode (email) {
+        fetch("http://yundingxx.com:3366/api/sendMailCode", {
+            "headers": {
+                "content-type": "application/x-www-form-urlencoded; charset=UTF-8"
+            },
+            "body": `email=${email}`,
+            "method": "POST",
+            "mode": "cors",
+            "credentials": "include"
+        }).then(rs => rs.json()).then(rs => {
+            if (rs.code == 304) {
+                const next = rs.data + 1;
+                app.$Message.info(`${next}秒后自动重新获取验证码然后刷新`);
+                setTimeout(() => sendValidateCode(email), next * 1000);
+            } else {
+                location.reload();
+            }
+        });
+    }
+
     // 接管登录成功的回调
     let loginCb = function (data) {
+        console.log(data)
         let user = app.user;
         // 检查错误
         if (data.code == 500) {
-            user.status = "登录失败";
-            user.status_msg = "账号已在他处登录";
+            app.$set(user, 'status', "登录失败");
+            app.$set(user, 'status_msg', "账号已在他处登录");
             return;
         } else if (data.code != 200) {
-            user.status = "登录失败";
-            user.status_msg = data.msg || '未知错误';
+            if (data.code == 400) {
+                sendValidateCode(user.email);
+            }
+            app.$set(user, 'status', "登录失败");
+            app.$set(user, 'status_msg', data.msg || '未知错误');
             return;
         }
 
