@@ -755,11 +755,11 @@ export default {
       }
       if (data.win === 2) {
         this.fightGains.fightCount++;
-      }
 
-      // 回合数大于0却没经验，属于在线异常状态，标记异常由home总控处理
-      if (this.gains.roundCount > 0 && !this.gains.avgExp) {
-        this.user.teamStatus = 'leave';
+        // 回合数大于0却没经验，属于在线异常状态，标记异常由home总控处理
+        if (this.gains.roundCount > 0 && !this.gains.avgExp) {
+          this.user.teamStatus = 'leave';
+        }
       }
 
       this.$set(this.user, "message", data);
