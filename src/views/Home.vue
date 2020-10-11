@@ -33,6 +33,12 @@
       <FormItem>
         <Input v-if="openDm" search enter-button="发送" placeholder="快来发送弹幕吧" @on-search="handleSendChat" v-model="sendMsg"/>
       </FormItem>
+      <FormItem>
+        无限挂机
+        <i-switch
+          v-model="forever"
+        />
+      </FormItem>
       <br />
       <!-- <FormItem label="每日计划：" style="width:100%">
         <CheckboxGroup v-model="dayPlan">
@@ -152,6 +158,7 @@ export default {
       showScreensContent: false,
       screens: [],
       dayPlan: [],
+      forever: false,
       dayPlanOptions: [
         { label: '荆棘之海', value: '5eecd6110ec93271652d2940', isDone: [] },
         { label: '每日冒险', value: '5eef5927a447f4ad9b833648', isDone: [] },
@@ -194,6 +201,8 @@ export default {
     const teammateNotInTeam = [];
     // 每隔12秒检测有没有队伍
     setInterval(() => {
+      if (!this.forever) return;
+      
       // 每24个小时执行一次
       if ((Date.now() - startTime) > 24 * 60 * 60 * 1000) { // 24 * 60 * 60 * 1000) {
         this.dayPlanOptions.map(dpo => dpo.isDone = []);
